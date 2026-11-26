@@ -21,6 +21,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Added
+- **Backup:** in Settings → System, save all your photos and videos into one ZIP file in a place you pick (phone folder, SD card or a cloud app's folder), and restore from a ZIP later. Photos already in the gallery are skipped. Nothing is sent by the app.
 - **Clean up:** in the Albums tab, review screenshots, large videos (100 MB or more) and exact duplicate photos, and move the ones you pick to the trash in one go. Duplicates are found by comparing the files' content on your device (the oldest copy of each is kept).
 - **Vault:** keep private photos and videos in a password-protected ZIP file (AES-256) in the Documents/HelixGallery folder. You create the password once and it is shown a single time (there is no recovery). Open it with the password or with your fingerprint, face or phone PIN. Select photos in the gallery and tap the lock to move them in; originals are only deleted after they are safely stored. You can restore items to the gallery or delete them. After uninstalling the app, any ZIP app can open the file with your password.
 - **Open with:** Helix Gallery now appears in the "Open with" list for photos and videos from other apps and opens them right away, with zoom for photos and controls for videos. Closing it takes you back to the app you came from.

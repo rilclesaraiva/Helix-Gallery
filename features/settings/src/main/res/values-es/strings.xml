@@ -81,4 +81,17 @@
     <string name="about_terms_desc">Reglas para usar la app</string>
     <string name="about_support">Apoya el proyecto</string>
     <string name="about_support_desc">Dale una estrella en GitHub y compártelo</string>
+    <string name="settings_backup_section">Copia de seguridad</string>
+    <string name="settings_backup_export">Copia de seguridad en ZIP</string>
+    <string name="settings_backup_export_desc">Guarda todas las fotos y videos en un ZIP, donde elijas</string>
+    <string name="settings_backup_import">Restaurar desde un ZIP</string>
+    <string name="settings_backup_import_desc">Devuelve a la galería las fotos y videos de una copia</string>
+    <string name="settings_backup_working">Copiando… %1$d de %2$d</string>
+    <string name="settings_backup_importing">Restaurando…</string>
+    <string name="settings_backup_imported">Listo: %1$d añadidos, %2$d omitidos (ya estaban).</string>
+    <string name="settings_backup_failed">Algo salió mal. Inténtalo de nuevo.</string>
+    <plurals name="settings_backup_exported">
+        <item quantity="one">Listo: %d archivo guardado</item>
+        <item quantity="other">Listo: %d archivos guardados</item>
+    </plurals>
 </resources>

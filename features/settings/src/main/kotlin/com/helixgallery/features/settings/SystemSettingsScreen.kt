@@ -9,6 +9,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -19,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +48,7 @@ fun SystemSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier, view
     val available = (updateState as? UpdatesUiState.Done)?.result as? UpdateCheckResult.Available
 
     HelixSubPage(title = stringResource(R.string.settings_system), onBack = onBack, modifier = modifier) {
+        BackupSection()
         HelixSettingsSection(title = stringResource(R.string.settings_updates_section)) {
             HelixSettingsItem(
                 icon = HelixIcons.Update,
@@ -120,5 +124,44 @@ private fun promptsSubtitle(state: UpdatePromptState): String {
         )
         skipped != null -> stringResource(R.string.settings_update_prompts_skipped, skipped.removePrefix("v"))
         else -> stringResource(R.string.settings_update_prompts_on)
+    }
+}
+
+/** Backup em ZIP: gravar num lugar à escolha da pessoa e devolver à galeria. */
+@Composable
+private fun BackupSection(viewModel: BackupViewModel = viewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) viewModel.export(uri)
+    }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.import(uri)
+    }
+    val busy = state.busy
+    val status: String? = when (val s = state) {
+        BackupUi.Idle -> null
+        is BackupUi.Exporting -> stringResource(R.string.settings_backup_working, s.done, s.total)
+        BackupUi.Importing -> stringResource(R.string.settings_backup_importing)
+        is BackupUi.Exported -> pluralStringResource(R.plurals.settings_backup_exported, s.count, s.count)
+        is BackupUi.Imported -> stringResource(R.string.settings_backup_imported, s.imported, s.skipped)
+        BackupUi.Failed -> stringResource(R.string.settings_backup_failed)
+    }
+    HelixSettingsSection(title = stringResource(R.string.settings_backup_section)) {
+        HelixSettingsItem(
+            icon = HelixIcons.Send,
+            accent = HelixAccent.Green,
+            title = stringResource(R.string.settings_backup_export),
+            subtitle = status ?: stringResource(R.string.settings_backup_export_desc),
+            enabled = !busy,
+            onClick = { export.launch("helixgallery_backup_" + java.time.LocalDate.now() + ".zip") },
+        )
+        HelixSettingsItem(
+            icon = HelixIcons.History,
+            accent = HelixAccent.Green,
+            title = stringResource(R.string.settings_backup_import),
+            subtitle = stringResource(R.string.settings_backup_import_desc),
+            enabled = !busy,
+            onClick = { import.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")) },
+        )
     }
 }

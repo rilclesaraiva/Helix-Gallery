@@ -12,6 +12,7 @@ android {
 dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":data:updates"))
+    implementation(project(":data:media"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.compose)
 }

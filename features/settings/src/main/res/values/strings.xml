@@ -81,4 +81,17 @@
     <string name="about_terms_desc">Rules for using the app</string>
     <string name="about_support">Support the project</string>
     <string name="about_support_desc">Star it on GitHub and share it</string>
+    <string name="settings_backup_section">Backup</string>
+    <string name="settings_backup_export">Back up to a ZIP file</string>
+    <string name="settings_backup_export_desc">Save all photos and videos in one ZIP, anywhere you choose</string>
+    <string name="settings_backup_import">Restore from a ZIP file</string>
+    <string name="settings_backup_import_desc">Add the photos and videos from a backup back to the gallery</string>
+    <string name="settings_backup_working">Copying… %1$d of %2$d</string>
+    <string name="settings_backup_importing">Restoring…</string>
+    <string name="settings_backup_imported">Done: %1$d added, %2$d skipped (already there).</string>
+    <string name="settings_backup_failed">Something went wrong. Try again.</string>
+    <plurals name="settings_backup_exported">
+        <item quantity="one">Done: %d file saved</item>
+        <item quantity="other">Done: %d files saved</item>
+    </plurals>
 </resources>

@@ -8,6 +8,7 @@ Helix Gallery is a free, open-source gallery app (GPL-3.0). This page says what 
 - **Your photos and videos stay on your device.** The app reads them through Android's media library to show them. It does not upload, copy or send them anywhere. They leave your device only when you choose Share and pick another app.
 - **Your choices** (theme, layout, columns) are saved on your device only.
 - **The vault** is a password-protected ZIP file (AES-256) saved in your Documents/HelixGallery folder on the device. The password is never sent anywhere and the app cannot recover it. If you turn on quick unlock, the password is stored encrypted with a key held by Android's hardware-backed keystore, usable only after you authenticate with your biometrics or screen lock.
+- **Backup:** when you ask for a backup, the app writes a ZIP of your photos and videos to the location you choose in Android's file picker. The app itself sends nothing over the internet.
 - **No account, no ads, no analytics, no trackers, no cookies.**
 
 ## Permissions
