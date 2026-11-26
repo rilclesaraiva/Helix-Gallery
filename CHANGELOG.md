@@ -6,6 +6,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+- **No bars stuck to the top:** screen titles now scroll away with the content and the buttons float over the page with a translucent background. The back button no longer covers titles in Settings.
+- **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
+
 ### Added
 - **First version of Helix Gallery:** a photo and video gallery for Android 12 and newer, in Material 3 Expressive, with the colors of the Helix Nebula. Everything stays on your device.
 - **Photos tab:** all your photos and videos, newest first, with three layouts (regular, by day, by month), 3 to 5 columns and a fast-scroll handle that shows the month and year while you drag.
@@ -15,3 +19,6 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Search:** find photos by file name, folder, type (photo, video, gif), year or month.
 - **Settings:** theme (system, light, dark, AMOLED), optional wallpaper colors, layout and columns, update check and About (source code, license, privacy policy, terms).
 - **Languages:** English, Portuguese and Spanish.
+- **Pinch to resize the grid:** pinch on the Photos tab to change how many photos fit on screen, from by-day with 3 columns up to by-month.
+- **Three-dots menus open as a bottom panel** (layouts on the photo lists, and share, favorite, details and trash in the viewer).
+- **Video controls with the wavy progress bar:** play/pause, a progress bar that shows the time while you drag, and mute.

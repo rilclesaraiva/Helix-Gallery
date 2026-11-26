@@ -49,6 +49,7 @@ fun MainTabs(
                     source = MediaSource.All,
                     title = stringResource(R.string.tab_photos),
                     onOpen = onOpenViewer,
+                    onOpenSettings = onOpenSettings,
                     bottomInset = true,
                 )
                 1 -> AlbumsScreen(

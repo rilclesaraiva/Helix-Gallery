@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="viewer_back">Atrás</string>
     <string name="viewer_share">Compartir</string>
     <string name="viewer_favorite">Añadir a favoritos</string>
     <string name="viewer_unfavorite">Quitar de favoritos</string>
@@ -18,4 +17,8 @@
     <string name="details_folder">Carpeta</string>
     <string name="details_camera">Cámara</string>
     <string name="details_settings">Ajustes</string>
+    <string name="viewer_play">Reproducir</string>
+    <string name="viewer_pause">Pausar</string>
+    <string name="viewer_mute">Silenciar</string>
+    <string name="viewer_unmute">Activar sonido</string>
 </resources>

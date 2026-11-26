@@ -10,7 +10,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,26 +20,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,10 +45,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
+import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
 import com.helixgallery.core.designsystem.component.GridScrubber
+import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
+import com.helixgallery.core.designsystem.component.HelixIcons
+import com.helixgallery.core.designsystem.component.HelixMenuAction
+import com.helixgallery.core.designsystem.component.HelixMoreMenu
+import com.helixgallery.core.designsystem.component.HelixPageTitle
+import com.helixgallery.core.designsystem.component.HelixStatusBarScrim
 import com.helixgallery.core.designsystem.component.HelixLoading
 import com.helixgallery.core.designsystem.component.MediaGrid
-import com.helixgallery.core.model.GRID_COLUMN_OPTIONS
 import com.helixgallery.core.model.GridLayout
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.core.model.MediaSource
@@ -67,6 +67,7 @@ import com.helixgallery.core.model.selectMedia
  *
  * @param onOpen abre o visualizador na foto tocada, dentro da mesma lista.
  * @param onBack só nas telas de dentro (álbum, coleção); a aba Fotos não tem.
+ * @param onOpenSettings só na aba Fotos: o atalho dos Ajustes ao lado do título.
  * @param bottomInset espaço para a barra flutuante, quando ela está por cima.
  */
 @Composable
@@ -76,6 +77,7 @@ fun CollectionScreen(
     onOpen: (source: MediaSource, mediaId: Long) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
     bottomInset: Boolean = false,
     viewModel: CollectionViewModel = viewModel(key = "collection_${source.key}"),
 ) {
@@ -97,124 +99,96 @@ fun CollectionScreen(
 
     BackHandler(enabled = selectedIds.isNotEmpty()) { viewModel.clearSelection() }
 
-    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.fillMaxSize()) {
-            if (selectedIds.isNotEmpty()) {
-                SelectionBar(
-                    count = selectedIds.size,
-                    allFavorite = selectedItems.isNotEmpty() && selectedItems.all { it.isFavorite },
-                    inTrash = inTrash,
-                    onClose = viewModel::clearSelection,
-                    onShare = {
-                        context.shareMedia(
-                            uris = selectedItems.map { it.uri },
-                            mimeTypes = selectedItems.map { it.mimeType },
-                            title = context.getString(R.string.photos_share),
-                        )
-                    },
-                    onFavorite = { favorite ->
-                        launch(viewModel.repository.favoriteRequest(selectedItems.map { it.uri }, favorite))
-                    },
-                    onTrash = {
-                        launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, !inTrash))
-                    },
-                    onDelete = {
-                        launch(viewModel.repository.deleteRequest(selectedItems.map { it.uri }))
-                    },
-                )
-            } else {
-                TitleBar(
-                    title = title ?: items.firstOrNull()?.bucketName.orEmpty(),
-                    onBack = onBack,
-                    layout = prefs.gridLayout,
-                    columns = prefs.columns,
-                    onLayout = viewModel::setLayout,
-                    onColumns = viewModel::setColumns,
-                )
-            }
-            Box(Modifier.weight(1f)) {
-                when {
-                    !mediaState.loaded -> HelixLoading()
-                    items.isEmpty() -> EmptyState(inTrash)
-                    else -> {
-                        MediaGrid(
-                            entries = entries,
-                            columns = prefs.columns,
-                            selectedIds = selectedIds,
-                            onOpen = { onOpen(source, it.id) },
-                            onToggleSelect = { viewModel.toggle(it.id) },
-                            state = gridState,
-                            contentPadding = PaddingValues(bottom = if (bottomInset) 112.dp else 16.dp),
-                        )
-                        GridScrubber(
-                            state = gridState,
-                            entries = entries,
-                            modifier = Modifier.align(Alignment.CenterEnd),
-                        )
-                    }
+    val pageTitle = title ?: items.firstOrNull()?.bucketName.orEmpty()
+    val layoutActions = listOf(
+        HelixMenuAction(
+            label = stringResource(R.string.photos_layout_regular),
+            icon = HelixIcons.Photo,
+            selected = prefs.gridLayout == GridLayout.Regular,
+            onClick = { viewModel.setLayout(GridLayout.Regular) },
+        ),
+        HelixMenuAction(
+            label = stringResource(R.string.photos_layout_day),
+            icon = HelixIcons.Collections,
+            selected = prefs.gridLayout == GridLayout.Day,
+            onClick = { viewModel.setLayout(GridLayout.Day) },
+        ),
+        HelixMenuAction(
+            label = stringResource(R.string.photos_layout_month),
+            icon = HelixIcons.Collections,
+            selected = prefs.gridLayout == GridLayout.Month,
+            onClick = { viewModel.setLayout(GridLayout.Month) },
+        ),
+    )
+    val titleRow: @Composable () -> Unit = {
+        HelixPageTitle(title = pageTitle, hasBack = onBack != null) {
+            if (onOpenSettings != null) {
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.photos_settings))
                 }
             }
+            HelixMoreMenu(actions = layoutActions)
         }
     }
-}
 
-@Composable
-private fun TitleBar(
-    title: String,
-    onBack: (() -> Unit)?,
-    layout: GridLayout,
-    columns: Int,
-    onLayout: (GridLayout) -> Unit,
-    onColumns: (Int) -> Unit,
-) {
-    var menu by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.photos_back))
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+        when {
+            !mediaState.loaded -> Column(Modifier.fillMaxSize()) {
+                titleRow()
+                HelixLoading()
+            }
+            items.isEmpty() -> Column(Modifier.fillMaxSize()) {
+                titleRow()
+                EmptyState(inTrash)
+            }
+            else -> {
+                MediaGrid(
+                    entries = entries,
+                    columns = prefs.columns,
+                    selectedIds = selectedIds,
+                    onOpen = { onOpen(source, it.id) },
+                    onToggleSelect = { viewModel.toggle(it.id) },
+                    state = gridState,
+                    contentPadding = PaddingValues(bottom = if (bottomInset) 112.dp else 16.dp),
+                    header = titleRow,
+                    onZoomStep = viewModel::zoomStep,
+                )
+                GridScrubber(
+                    state = gridState,
+                    entries = entries,
+                    headerCount = 1,
+                    modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = 64.dp),
+                )
             }
         }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-            maxLines = 1,
-        )
-        Box {
-            IconButton(onClick = { menu = true }) {
-                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.photos_view_options))
-            }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                val layouts = listOf(
-                    GridLayout.Regular to R.string.photos_layout_regular,
-                    GridLayout.Day to R.string.photos_layout_day,
-                    GridLayout.Month to R.string.photos_layout_month,
-                )
-                layouts.forEach { (value, label) ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(label)) },
-                        leadingIcon = { if (layout == value) Icon(Icons.Filled.Check, contentDescription = null) },
-                        onClick = {
-                            onLayout(value)
-                            menu = false
-                        },
+        HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        if (selectedIds.isNotEmpty()) {
+            // A barra da seleção toma o lugar do voltar.
+            SelectionBar(
+                count = selectedIds.size,
+                allFavorite = selectedItems.isNotEmpty() && selectedItems.all { it.isFavorite },
+                inTrash = inTrash,
+                onClose = viewModel::clearSelection,
+                onShare = {
+                    context.shareMedia(
+                        uris = selectedItems.map { it.uri },
+                        mimeTypes = selectedItems.map { it.mimeType },
+                        title = context.getString(R.string.photos_share),
                     )
-                }
-                GRID_COLUMN_OPTIONS.forEach { value ->
-                    DropdownMenuItem(
-                        text = { Text(pluralStringResource(R.plurals.photos_columns, value, value)) },
-                        leadingIcon = { if (columns == value) Icon(Icons.Filled.Check, contentDescription = null) },
-                        onClick = {
-                            onColumns(value)
-                            menu = false
-                        },
-                    )
-                }
-            }
+                },
+                onFavorite = { favorite ->
+                    launch(viewModel.repository.favoriteRequest(selectedItems.map { it.uri }, favorite))
+                },
+                onTrash = {
+                    launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, !inTrash))
+                },
+                onDelete = {
+                    launch(viewModel.repository.deleteRequest(selectedItems.map { it.uri }))
+                },
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        } else if (onBack != null) {
+            HelixFloatingBackButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart))
         }
     }
 }
@@ -229,11 +203,18 @@ private fun SelectionBar(
     onFavorite: (Boolean) -> Unit,
     onTrash: () -> Unit,
     onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    // Barra que flutua sobre a grade (nada de barra presa no topo); a grade aparece por trás.
+    Surface(
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = FLOATING_BUTTON_ALPHA),
+        shadowElevation = 3.dp,
+        modifier = modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
     Row(
-        modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         IconButton(onClick = onClose) {
             Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.photos_clear_selection))
@@ -266,6 +247,7 @@ private fun SelectionBar(
                 Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.photos_delete_forever))
             }
         }
+    }
     }
 }
 

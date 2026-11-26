@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="viewer_back">Voltar</string>
     <string name="viewer_share">Compartilhar</string>
     <string name="viewer_favorite">Adicionar aos favoritos</string>
     <string name="viewer_unfavorite">Remover dos favoritos</string>
@@ -18,4 +17,8 @@
     <string name="details_folder">Pasta</string>
     <string name="details_camera">Câmera</string>
     <string name="details_settings">Configurações</string>
+    <string name="viewer_play">Reproduzir</string>
+    <string name="viewer_pause">Pausar</string>
+    <string name="viewer_mute">Silenciar</string>
+    <string name="viewer_unmute">Ativar som</string>
 </resources>

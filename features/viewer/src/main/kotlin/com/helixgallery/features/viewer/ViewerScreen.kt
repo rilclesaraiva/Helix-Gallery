@@ -16,6 +16,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -24,7 +27,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,7 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -51,7 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
+import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
+import com.helixgallery.core.designsystem.component.HelixBackButton
+import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import com.helixgallery.core.designsystem.component.HelixLoading
+import com.helixgallery.core.designsystem.component.HelixMenuAction
+import com.helixgallery.core.designsystem.component.HelixMoreMenu
 import com.helixgallery.core.designsystem.component.HelixModalSheet
 import com.helixgallery.core.designsystem.component.formatDuration
 import com.helixgallery.core.model.MediaItem
@@ -108,6 +115,50 @@ private fun ViewerContent(
     }
     fun launch(sender: IntentSender) = launcher.launch(IntentSenderRequest.Builder(sender).build())
 
+    fun share() {
+        context.shareMedia(listOf(current.uri), listOf(current.mimeType), context.getString(R.string.viewer_share))
+    }
+    fun toggleFavorite() = launch(viewModel.repository.favoriteRequest(listOf(current.uri), !current.isFavorite))
+    fun showDetails() {
+        viewModel.loadExif(current.uri, current.isVideo)
+        details = true
+    }
+    fun trashOrRestore() = launch(viewModel.repository.trashRequest(listOf(current.uri), !inTrash))
+    fun deleteForever() = launch(viewModel.repository.deleteRequest(listOf(current.uri)))
+
+    // O menu dos três pontinhos: das ações mais usadas às mais raras, a destrutiva por último.
+    val menuActions = buildList {
+        if (!inTrash) {
+            add(HelixMenuAction(stringResource(R.string.viewer_share), Icons.Filled.Share, onClick = ::share))
+            add(
+                HelixMenuAction(
+                    stringResource(if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite),
+                    if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    onClick = ::toggleFavorite,
+                ),
+            )
+        }
+        add(HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails))
+        add(
+            HelixMenuAction(
+                stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
+                if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
+                destructive = !inTrash,
+                onClick = ::trashOrRestore,
+            ),
+        )
+        if (inTrash) {
+            add(
+                HelixMenuAction(
+                    stringResource(R.string.viewer_delete_forever),
+                    Icons.Filled.Delete,
+                    destructive = true,
+                    onClick = ::deleteForever,
+                ),
+            )
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
@@ -117,7 +168,12 @@ private fun ViewerContent(
         ) { page ->
             val item = items[page.coerceIn(0, items.lastIndex)]
             if (item.isVideo) {
-                VideoPage(uri = item.uri, isCurrent = page == pagerState.currentPage)
+                VideoPage(
+                    uri = item.uri,
+                    isCurrent = page == pagerState.currentPage,
+                    controlsVisible = chrome,
+                    onTap = { chrome = !chrome },
+                )
             } else {
                 ZoomableImage(
                     uri = item.uri,
@@ -127,6 +183,7 @@ private fun ViewerContent(
             }
         }
 
+        // Nada de barra presa no topo: botões redondos translúcidos flutuam sobre a foto.
         AnimatedVisibility(
             visible = chrome,
             enter = fadeIn(),
@@ -134,21 +191,27 @@ private fun ViewerContent(
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)))
-                    .statusBarsPadding()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.viewer_back), tint = Color.White)
+                HelixBackButton(onClick = onBack)
+                Spacer(Modifier.width(8.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FLOATING_BUTTON_ALPHA),
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
+                    Text(
+                        text = formatDate(current.takenMs),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    )
                 }
-                Text(
-                    text = formatDate(current.takenMs),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                )
+                Spacer(Modifier.weight(1f))
+                HelixFloatingCircle {
+                    HelixMoreMenu(actions = menuActions)
+                }
             }
         }
 
@@ -158,40 +221,27 @@ private fun ViewerContent(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))))
-                    .navigationBarsPadding()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FLOATING_BUTTON_ALPHA),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                shadowElevation = 3.dp,
+                modifier = Modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp),
             ) {
-                if (!inTrash) {
-                    BarButton(Icons.Filled.Share, stringResource(R.string.viewer_share), Modifier.weight(1f)) {
-                        context.shareMedia(listOf(current.uri), listOf(current.mimeType), context.getString(R.string.viewer_share))
+                Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (!inTrash) {
+                        BarButton(Icons.Filled.Share, stringResource(R.string.viewer_share)) { share() }
+                        BarButton(
+                            if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            stringResource(if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite),
+                        ) { toggleFavorite() }
                     }
                     BarButton(
-                        if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        stringResource(if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite),
-                        Modifier.weight(1f),
-                    ) {
-                        launch(viewModel.repository.favoriteRequest(listOf(current.uri), !current.isFavorite))
-                    }
-                }
-                BarButton(Icons.Filled.Info, stringResource(R.string.viewer_details), Modifier.weight(1f)) {
-                    viewModel.loadExif(current.uri, current.isVideo)
-                    details = true
-                }
-                BarButton(
-                    if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
-                    stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
-                    Modifier.weight(1f),
-                ) {
-                    launch(viewModel.repository.trashRequest(listOf(current.uri), !inTrash))
-                }
-                if (inTrash) {
-                    BarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever), Modifier.weight(1f)) {
-                        launch(viewModel.repository.deleteRequest(listOf(current.uri)))
+                        if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
+                        stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
+                    ) { trashOrRestore() }
+                    if (inTrash) {
+                        BarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever)) { deleteForever() }
                     }
                 }
             }
@@ -207,11 +257,10 @@ private fun ViewerContent(
 private fun BarButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     description: String,
-    modifier: Modifier,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(icon, contentDescription = description, tint = Color.White)
+    IconButton(onClick = onClick) {
+        Icon(icon, contentDescription = description)
     }
 }
 

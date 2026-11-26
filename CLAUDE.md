@@ -46,7 +46,9 @@ Módulos com dependências em uma direção só: `app → features → data → 
 - Componentes do `androidx.compose.material3`; componente próprio só sem equivalente, em `core/designsystem`. APIs experimentais só dentro de `core/designsystem`, embrulhadas.
 - Paleta própria da Nebulosa da Hélice (azul-noite, ciano, âmbar, magenta); tema escuro por padrão; claro, escuro e AMOLED; cor dinâmica é opção (Ajustes → Aparência).
 - Todo movimento usa `helixSpatialSpec`/`helixFastSpatialSpec`/`helixEffectsSpec`/`helixScreenSpec` (nada de `tween(300)` à mão).
-- Painéis de baixo sempre `HelixModalSheet`. Telas de dentro: `HelixSubPage` (título grande + botão de voltar flutuante).
+- Painéis de baixo sempre `HelixModalSheet` (voltar do app, nunca o do M3). Menu dos 3 pontinhos = painel emergente (`HelixMoreMenu`/`HelixMenuSheet`), nunca `DropdownMenu`. Telas de dentro: `HelixSubPage` (título grande + botão de voltar flutuante).
+- **Proibida barra superior presa no topo** (barra de pesquisa não entra na regra): o título é a primeira linha da lista (`HelixPageTitle`, rola junto) e o voltar flutua (`HelixFloatingBackButton`, círculo com opacidade 0,9; o título deixa `HelixBackButtonInset` livre para o botão nunca cobri-lo). Botões que flutuam sobre a página usam `HelixFloatingCircle`. Barra da seleção flutua e toma o lugar do voltar.
+- Controles de vídeo e barra de progresso = `HelixSeekBar` (porte do `BoomSeekBar`); não copiar o visual de outro app, tirar do código do Boom. Rolagem rápida = só a alça recebe o dedo. Pinça na grade da aba Fotos troca layout/colunas (`nextGridZoom`).
 - **Cores dos ícones dos Ajustes:** `HelixAccent` (famílias fixas), mesma família por categoria (Aparência = Purple/Pink, Galeria = Teal, Sistema = Green, Sobre = Blue). Ícone novo em Ajustes sempre com `accent` explícito.
 - Toda opção dos Ajustes mora numa categoria. Aviso de atualização é item recolhível em Sistema → Atualizações (modelo BoomListener), sem painel solto.
 

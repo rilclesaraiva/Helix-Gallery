@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,6 +44,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.HelixImage
 import com.helixgallery.core.designsystem.component.HelixLoading
+import com.helixgallery.core.designsystem.component.HelixPageTitle
+import com.helixgallery.core.designsystem.component.HelixStatusBarScrim
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.isScreenshot
@@ -62,31 +64,34 @@ fun AlbumsScreen(
     val videos = remember(state.items) { state.items.count { it.isVideo } }
     val screenshots = remember(state.items) { state.items.count { it.isScreenshot() } }
 
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
-        Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.albums_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.albums_settings))
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+        Column(Modifier.fillMaxSize()) {
+        val titleRow: @Composable () -> Unit = {
+            HelixPageTitle(title = stringResource(R.string.albums_title)) {
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.albums_settings))
+                }
             }
         }
         if (!state.loaded) {
+            titleRow()
             HelixLoading()
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 120.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    // O título faz parte da página (rola junto); sem as margens da grade.
+                    Box(Modifier.layout { m, c ->
+                        val extra = 16.dp.roundToPx() * 2
+                        val p = m.measure(c.copy(maxWidth = c.maxWidth + extra))
+                        layout(c.maxWidth, p.height) { p.place(-extra / 2, 0) }
+                    }) { titleRow() }
+                }
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         QuickRow(Icons.Filled.Favorite, stringResource(R.string.albums_favorites), favorites) {
@@ -139,6 +144,8 @@ fun AlbumsScreen(
                 }
             }
         }
+        }
+        HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
     }
 }
 

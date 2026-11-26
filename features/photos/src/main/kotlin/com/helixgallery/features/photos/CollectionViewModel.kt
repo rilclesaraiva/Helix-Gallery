@@ -8,8 +8,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.helixgallery.core.datastore.HelixPreferences
 import com.helixgallery.core.model.GridLayout
+import com.helixgallery.core.model.GridZoom
 import com.helixgallery.core.model.MediaState
 import com.helixgallery.core.model.UserPreferences
+import com.helixgallery.core.model.nextGridZoom
 import com.helixgallery.data.media.MediaData
 import com.helixgallery.data.media.MediaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +50,16 @@ class CollectionViewModel(application: Application) : AndroidViewModel(applicati
 
     fun setLayout(layout: GridLayout) {
         viewModelScope.launch { prefs.setGridLayout(layout) }
+    }
+
+    /** Pinça na grade: afasta ([zoomOut]) ou aproxima um passo (layout e colunas juntos). */
+    fun zoomStep(zoomOut: Boolean) {
+        val current = preferences.value
+        val next = nextGridZoom(GridZoom(current.gridLayout, current.columns), zoomOut)
+        viewModelScope.launch {
+            if (next.layout != current.gridLayout) prefs.setGridLayout(next.layout)
+            if (next.columns != current.columns) prefs.setColumns(next.columns)
+        }
     }
 
     fun setColumns(columns: Int) {

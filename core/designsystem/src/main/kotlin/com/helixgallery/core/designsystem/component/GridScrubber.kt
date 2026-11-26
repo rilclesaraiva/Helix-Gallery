@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,14 +44,19 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * Rolagem rápida por data: uma alça na borda direita que aparece ao rolar. Arrastar
- * a alça leva a grade até a data, que aparece num balão ao lado.
+ * Rolagem rápida por data (modelo do BoomListener): uma alça na borda direita que aparece ao
+ * rolar. Só a alça responde ao dedo: o trilho não pega toque (correr o dedo ali rola a grade
+ * normalmente) e, ao segurar a alça, ela segue o dedo a partir de onde está, sem pular.
+ * Enquanto está segurada, a data aparece num balão ao lado.
+ *
+ * @param headerCount itens da grade antes das fotos (ex.: o título da tela), que não entram na conta.
  */
 @Composable
 fun GridScrubber(
     state: LazyGridState,
     entries: List<GridEntry>,
     modifier: Modifier = Modifier,
+    headerCount: Int = 0,
 ) {
     val scope = rememberCoroutineScope()
     val locale = currentLocale()
@@ -61,68 +67,72 @@ fun GridScrubber(
         if (scrolling || dragging) {
             active = true
         } else {
-            delay(1500)
+            delay(HIDE_AFTER_MS)
             active = false
         }
     }
     val alpha by animateFloatAsState(
-        targetValue = if (active && entries.size > 40) 1f else 0f,
+        targetValue = if (active && entries.size > MIN_ENTRIES) 1f else 0f,
         animationSpec = helixEffectsSpec(),
         label = "scrubberAlpha",
     )
     val total = entries.size
     val density = LocalDensity.current
 
-    BoxWithConstraints(modifier.fillMaxHeight().width(40.dp)) {
+    BoxWithConstraints(modifier.fillMaxHeight().width(TrackWidth)) {
         val heightPx = with(density) { maxHeight.toPx() }
-        val thumbPx = with(density) { 48.dp.toPx() }
-        val index = state.firstVisibleItemIndex.coerceIn(0, (total - 1).coerceAtLeast(0))
+        val thumbPx = with(density) { ThumbHeight.toPx() }
+        val travel = (heightPx - thumbPx).coerceAtLeast(1f)
+        val index = (state.firstVisibleItemIndex - headerCount).coerceIn(0, (total - 1).coerceAtLeast(0))
         val fraction = if (total <= 1) 0f else index.toFloat() / (total - 1)
-        val offsetY = (fraction * (heightPx - thumbPx)).roundToInt()
+        // Onde a alça está desenhada; durante o arrasto, onde o dedo a levou.
+        var dragFraction by remember { mutableFloatStateOf(0f) }
+        val shown = if (dragging) dragFraction else fraction
+        val offsetY = (shown * travel).roundToInt()
 
-        fun jumpTo(y: Float) {
+        fun scrollToFraction(f: Float) {
             if (total <= 1) return
-            val f = ((y - thumbPx / 2f) / (heightPx - thumbPx)).coerceIn(0f, 1f)
-            val target = (f * (total - 1)).roundToInt()
+            val target = (f * (total - 1)).roundToInt() + headerCount
             scope.launch { state.scrollToItem(target) }
         }
 
-        val gesture = if (alpha > 0.05f) {
-            Modifier.pointerInput(total) {
-                detectVerticalDragGestures(
-                    onDragStart = { offset ->
-                        dragging = true
-                        jumpTo(offset.y)
-                    },
-                    onDragEnd = { dragging = false },
-                    onDragCancel = { dragging = false },
-                    onVerticalDrag = { change, _ ->
-                        change.consume()
-                        jumpTo(change.position.y)
-                    },
-                )
+        Box(Modifier.fillMaxHeight().width(TrackWidth).alpha(alpha)) {
+            // Só a alça tem área de toque; o resto da faixa deixa o toque passar para a grade.
+            val thumbTouch = if (alpha > 0.05f) {
+                Modifier.pointerInput(total, headerCount, travel) {
+                    detectVerticalDragGestures(
+                        onDragStart = {
+                            dragFraction = fraction
+                            dragging = true
+                        },
+                        onDragEnd = { dragging = false },
+                        onDragCancel = { dragging = false },
+                        onVerticalDrag = { change, dy ->
+                            change.consume()
+                            dragFraction = (dragFraction + dy / travel).coerceIn(0f, 1f)
+                            scrollToFraction(dragFraction)
+                        },
+                    )
+                }
+            } else {
+                Modifier
             }
-        } else {
-            Modifier
-        }
-
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .width(40.dp)
-                .alpha(alpha)
-                .then(gesture),
-        ) {
             Box(
                 Modifier
                     .offset { IntOffset(0, offsetY) }
                     .align(Alignment.TopEnd)
-                    .padding(end = 4.dp)
-                    .width(8.dp)
-                    .size(width = 8.dp, height = 48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-            )
+                    .size(width = TrackWidth, height = ThumbHeight)
+                    .then(thumbTouch),
+            ) {
+                Box(
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 4.dp)
+                        .size(width = if (dragging) ThumbWidthDragging else ThumbWidth, height = ThumbHeight)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+            }
             if (dragging && total > 0) {
                 val epoch = entries[index].epochDay()
                 val label = remember(epoch, locale) {
@@ -148,3 +158,10 @@ fun GridScrubber(
         }
     }
 }
+
+private val TrackWidth = 36.dp
+private val ThumbHeight = 52.dp
+private val ThumbWidth = 6.dp
+private val ThumbWidthDragging = 10.dp
+private const val HIDE_AFTER_MS = 1500L
+private const val MIN_ENTRIES = 25

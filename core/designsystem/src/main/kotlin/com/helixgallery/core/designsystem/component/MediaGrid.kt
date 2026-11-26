@@ -88,16 +88,23 @@ fun MediaGrid(
     modifier: Modifier = Modifier,
     state: LazyGridState = rememberLazyGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    /** Primeira linha da grade, que rola junto (o título da tela). Quem usa o [GridScrubber] passa `headerCount = 1`. */
+    header: (@Composable () -> Unit)? = null,
+    /** Pinça sobre a grade: `zoomOut` true quando os dedos se juntam. null = sem pinça. */
+    onZoomStep: ((zoomOut: Boolean) -> Unit)? = null,
 ) {
     val selecting = selectedIds.isNotEmpty()
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = state,
-        modifier = modifier.fillMaxSize(),
+        modifier = (if (onZoomStep != null) modifier.pinchToZoom(onZoomStep) else modifier).fillMaxSize(),
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
+        if (header != null) {
+            item(key = "page-header", span = { GridItemSpan(maxLineSpan) }, contentType = "page-header") { header() }
+        }
         items(
             items = entries,
             key = { entry ->

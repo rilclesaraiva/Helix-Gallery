@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="photos_title">Fotos</string>
-    <string name="photos_view_options">Opções de exibição</string>
     <string name="photos_layout_regular">Regular</string>
     <string name="photos_layout_day">Por dia</string>
     <string name="photos_layout_month">Por mês</string>
-    <plurals name="photos_columns">
-        <item quantity="one">%d coluna</item>
-        <item quantity="other">%d colunas</item>
-    </plurals>
     <plurals name="photos_selected">
         <item quantity="one">%d selecionada</item>
         <item quantity="other">%d selecionadas</item>
@@ -22,5 +17,5 @@
     <string name="photos_delete_forever">Excluir permanentemente</string>
     <string name="photos_empty">Nada por aqui ainda.</string>
     <string name="photos_empty_trash">A lixeira está vazia. Os itens ficam aqui por 30 dias.</string>
-    <string name="photos_back">Voltar</string>
+    <string name="photos_settings">Ajustes</string>
 </resources>
