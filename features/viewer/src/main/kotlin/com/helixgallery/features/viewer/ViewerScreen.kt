@@ -85,7 +85,7 @@ fun ViewerScreen(
         when {
             !state.loaded -> HelixLoading()
             items.isEmpty() -> LaunchedEffect(Unit) { onBack() }
-            else -> ViewerContent(source, items, startId, onBack, viewModel)
+            else -> ViewerContent(source, items, startId, onBack, onEdit, viewModel)
         }
     }
 }
@@ -96,6 +96,7 @@ private fun ViewerContent(
     items: List<MediaItem>,
     startId: Long,
     onBack: () -> Unit,
+    onEdit: ((MediaItem) -> Unit)?,
     viewModel: ViewerViewModel,
 ) {
     val context = LocalContext.current
