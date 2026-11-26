@@ -18,7 +18,7 @@
     <string name="editor_contrast">Contrast</string>
     <string name="editor_saturation">Color</string>
     <string name="editor_filter_none">None</string>
-    <string name="editor_filter_mono">Black & white</string>
+    <string name="editor_filter_mono">Black &amp; white</string>
     <string name="editor_filter_sepia">Sepia</string>
     <string name="editor_filter_vivid">Vivid</string>
     <string name="editor_filter_cool">Cool</string>
