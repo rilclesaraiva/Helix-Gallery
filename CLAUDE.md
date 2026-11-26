@@ -83,7 +83,7 @@ Módulos com dependências em uma direção só: `app → features → data → 
 
 ## Limitações das sessões do Claude
 - Artefatos da Action não baixam (403); logs da Action não são legíveis: o workflow posta o erro no commit. Secrets e tags dão 403 (o mantenedor cadastra; o CI cria a tag).
-- Ações do mantenedor pendentes: ativar o GitHub Pages (pasta `docs/` da `main`), manter o repositório público (o aviso de versão depende disso), instalar o app Claude do GitHub se quiser revisão por PR.
+- Já feitos pelo mantenedor desde o início: GitHub Pages ativo (pasta `docs/` da `main`) e repositório público (o aviso de versão depende disso). Não lembrar de novo. Opcional: instalar o app Claude do GitHub para revisão por PR.
 
 ## Contexto atual
 - Etapas 1 a 3 do roteiro escritas de uma vez (v0.1.0 ainda sem Release). Falta vistoria no aparelho: o primeiro CI decide se compila. Itens conhecidos da primeira entrega: sem "fotos destacadas" nem "agrupar parecidas" ainda; a busca abre o visualizador na lista de todas as fotos; local do EXIF (GPS) não é lido (exigiria `ACCESS_MEDIA_LOCATION`, decisão do mantenedor).
