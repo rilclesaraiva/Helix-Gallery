@@ -4,7 +4,6 @@
 package com.helixgallery.features.viewer
 
 import android.app.Activity
-import android.provider.MediaStore
 import android.net.Uri
 import android.content.IntentSender
 import android.text.format.Formatter
@@ -136,8 +135,6 @@ private fun ViewerContent(
     var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
     val inTrash = source == MediaSource.Trash
     val current = items[pagerState.currentPage.coerceIn(0, items.lastIndex)]
-    // Itens da lixeira só abrem com "includeTrashed" (sem isso o MediaStore esconde o arquivo).
-    fun displayUri(uri: String): String = if (inTrash) MediaStore.setIncludeTrashed(Uri.parse(uri)).toString() else uri
 
     LaunchedEffect(pagerState.currentPage) { zoomed = false }
 
@@ -189,14 +186,14 @@ private fun ViewerContent(
             val item = items[page.coerceIn(0, items.lastIndex)]
             if (item.isVideo) {
                 VideoPage(
-                    uri = displayUri(item.uri),
+                    uri = item.uri,
                     isCurrent = page == pagerState.currentPage,
                     controlsVisible = chrome,
                     onTap = { chrome = !chrome },
                 )
             } else {
                 ZoomableImage(
-                    uri = displayUri(item.uri),
+                    uri = item.uri,
                     onTap = { chrome = !chrome },
                     onZoomChanged = { if (page == pagerState.currentPage) zoomed = it },
                     onSwipeUp = { if (page == pagerState.currentPage) showDetails() },
