@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_title">Cofre</string>
+    <string name="vault_create_intro">Crie uma senha para o seu cofre. Suas fotos e vídeos privados ficam num arquivo criptografado (AES-256) na pasta Documents/HelixGallery. Não existe recuperação de senha.</string>
+    <string name="vault_password">Senha</string>
+    <string name="vault_confirm">Confirmar senha</string>
+    <string name="vault_create">Criar cofre</string>
+    <string name="vault_error_short">Use pelo menos %d caracteres.</string>
+    <string name="vault_error_mismatch">As senhas não são iguais.</string>
+    <string name="vault_save_title">Guarde a sua senha</string>
+    <string name="vault_save_body">Esta é a única vez que ela aparece. Se perdê-la, ninguém consegue abrir o cofre. Depois de desinstalar o app, esta senha é o único jeito de abrir o arquivo em qualquer programa de ZIP.</string>
+    <string name="vault_copy">Copiar senha</string>
+    <string name="vault_copied">Senha copiada</string>
+    <string name="vault_saved_ack">Já guardei a minha senha</string>
+    <string name="vault_locked_intro">Digite a senha para abrir o cofre.</string>
+    <string name="vault_unlock">Desbloquear</string>
+    <string name="vault_wrong_password">Senha incorreta.</string>
+    <string name="vault_quick_unlock">Desbloquear com biometria ou PIN</string>
+    <string name="vault_auth_title">Desbloquear o cofre</string>
+    <string name="vault_empty">O cofre está vazio. Na galeria, selecione fotos e escolha Mover para o cofre.</string>
+    <string name="vault_lock">Trancar o cofre</string>
+    <string name="vault_quick_on">Ativar desbloqueio rápido</string>
+    <string name="vault_quick_off">Desativar desbloqueio rápido</string>
+    <string name="vault_restore">Devolver à galeria</string>
+    <string name="vault_delete">Apagar do cofre</string>
+    <string name="vault_clear_selection">Limpar seleção</string>
+    <string name="vault_cancel">Cancelar</string>
+    <string name="vault_delete_title">Apagar de vez?</string>
+    <string name="vault_delete_body">Estes arquivos serão apagados do cofre. Não dá para desfazer.</string>
+    <string name="vault_working">Trabalhando…</string>
+    <string name="vault_failed">Algo deu errado. Nada foi perdido.</string>
+    <plurals name="vault_selected">
+        <item quantity="one">%d selecionado</item>
+        <item quantity="other">%d selecionados</item>
+    </plurals>
+    <plurals name="vault_pending">
+        <item quantity="one">%d item será adicionado quando você desbloquear.</item>
+        <item quantity="other">%d itens serão adicionados quando você desbloquear.</item>
+    </plurals>
+    <plurals name="vault_add_failed">
+        <item quantity="one">%d item não pôde ser adicionado e ficou na galeria.</item>
+        <item quantity="other">%d itens não puderam ser adicionados e ficaram na galeria.</item>
+    </plurals>
+    <plurals name="vault_restored">
+        <item quantity="one">%d item devolvido à galeria</item>
+        <item quantity="other">%d itens devolvidos à galeria</item>
+    </plurals>
+</resources>

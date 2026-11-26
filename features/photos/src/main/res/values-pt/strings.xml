@@ -18,4 +18,5 @@
     <string name="photos_empty">Nada por aqui ainda.</string>
     <string name="photos_empty_trash">A lixeira está vazia. Os itens ficam aqui por 30 dias.</string>
     <string name="photos_settings">Ajustes</string>
+    <string name="photos_move_to_vault">Mover para o cofre</string>
 </resources>

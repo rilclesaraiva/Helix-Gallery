@@ -72,7 +72,10 @@ import com.helixgallery.core.common.popBackStackOnce
 import com.helixgallery.core.common.requiredMediaPermissions
 import com.helixgallery.core.designsystem.component.HelixLogo
 import com.helixgallery.core.designsystem.theme.helixScreenSpec
+import com.helixgallery.core.model.MediaItem
 import com.helixgallery.core.model.MediaSource
+import com.helixgallery.features.vault.VaultScreen
+import com.helixgallery.features.viewer.ExternalViewerScreen
 import com.helixgallery.features.photos.CollectionScreen
 import com.helixgallery.features.settings.AboutScreen
 import com.helixgallery.features.settings.AppearanceScreen
@@ -88,6 +91,8 @@ private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_APPEARANCE = "settings/appearance"
 private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
 private const val ROUTE_SYSTEM = "settings/system"
+private const val ROUTE_VAULT = "vault"
+private const val ROUTE_VAULT_VIEW = "vault/view?uri={uri}&video={video}"
 private const val ROUTE_COLLECTION = "collection/{source}"
 private const val ROUTE_VIEWER = "viewer/{source}/{id}"
 private const val ROUTE_SETTINGS = "settings"
@@ -150,6 +155,8 @@ private fun HelixNavigation() {
     val onTab = route.isEmpty() || route in tabRoutes
     // Tocar de novo na aba aberta: a lista dela sobe até o topo.
     val reselect = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
+    // Itens que a pessoa mandou guardar no cofre; o cofre os recebe ao abrir.
+    var pendingVault by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
 
     // Modelo do BoomListener: telas de dentro entram deslizando por cima da anterior (que recua um
     // pouco e esmaece) e saem deslizando de volta; trocar de aba só esmaece. O "voltar" preditivo
@@ -219,12 +226,17 @@ private fun HelixNavigation() {
                         onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
                         bottomInset = true,
                         reselectTab = ROUTE_PHOTOS,
+                        onMoveToVault = { items ->
+                            pendingVault = items
+                            navController.navigateOnce(ROUTE_VAULT)
+                        },
                     )
                 }
                 composable(ROUTE_ALBUMS) {
                     AlbumsScreen(
                         onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
                         onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
+                        onOpenVault = { navController.navigateOnce(ROUTE_VAULT) },
                     )
                 }
                 composable(ROUTE_SEARCH) {
@@ -240,6 +252,10 @@ private fun HelixNavigation() {
                         title = collectionTitle(source),
                         onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
                         onBack = { navController.popBackStackOnce() },
+                        onMoveToVault = { items ->
+                            pendingVault = items
+                            navController.navigateOnce(ROUTE_VAULT)
+                        },
                     )
                 }
                 composable(
@@ -253,6 +269,29 @@ private fun HelixNavigation() {
                         source = MediaSource.parse(entry.arguments?.getString("source")),
                         startId = entry.arguments?.getLong("id") ?: 0L,
                         onBack = { navController.popBackStackOnce() },
+                    )
+                }
+                composable(ROUTE_VAULT) {
+                    VaultScreen(
+                        onBack = { navController.popBackStackOnce() },
+                        onOpenEntry = { uri, isVideo ->
+                            navController.navigateOnce("vault/view?uri=${Uri.encode(uri)}&video=$isVideo")
+                        },
+                        pending = pendingVault,
+                        onPendingHandled = { pendingVault = emptyList() },
+                    )
+                }
+                composable(
+                    route = ROUTE_VAULT_VIEW,
+                    arguments = listOf(
+                        navArgument("uri") { type = NavType.StringType },
+                        navArgument("video") { type = NavType.BoolType },
+                    ),
+                ) { entry ->
+                    ExternalViewerScreen(
+                        uri = entry.arguments?.getString("uri").orEmpty(),
+                        isVideo = entry.arguments?.getBoolean("video") ?: false,
+                        onClose = { navController.popBackStackOnce() },
                     )
                 }
                 composable(ROUTE_SETTINGS) {

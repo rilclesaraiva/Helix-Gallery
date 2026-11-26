@@ -29,9 +29,11 @@ include(":core:datastore")
 
 include(":data:media")
 include(":data:updates")
+include(":data:vault")
 
 include(":features:photos")
 include(":features:albums")
 include(":features:viewer")
 include(":features:search")
 include(":features:settings")
+include(":features:vault")

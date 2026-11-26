@@ -7,4 +7,5 @@
     <string name="albums_screenshots">Capturas de tela</string>
     <string name="albums_trash">Lixeira</string>
     <string name="albums_on_device">No seu aparelho</string>
+    <string name="albums_vault">Cofre</string>
 </resources>

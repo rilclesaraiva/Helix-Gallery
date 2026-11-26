@@ -19,7 +19,7 @@ Lido no início de cada sessão: é como o Claude recupera o contexto do projeto
 - Versionamento: SemVer, **regra e não escolha**: o número sai do `[Unreleased]`. Só correções → PATCH; algo novo ou alterado compatível → MINOR; quebra de compatibilidade → MAJOR. Trocar o sistema só com pedido explícito.
 - Release: commit de release na main (APP_VERSION novo + seção no CHANGELOG, sem tag) → `.github/workflows/ci.yml` cria a tag `vX.Y.Z` e publica o APK. Build para vistoria: artefato de cada push.
 - Pacote: `com.helixgallery.app`, fixo para sempre · R8 ativo no release, nunca desligar (com `-dontobfuscate`).
-- Ícone: `app/src/main/res/mipmap-anydpi/` e `drawable/ic_launcher_foreground.xml` (a Nebulosa da Hélice); só muda se o mantenedor pedir.
+- Ícone: a Nebulosa da Hélice do SVG do mantenedor (`docs/brand/helix-nebula-icon.svg`). O launcher usa a imagem renderizada em `app/src/main/res/drawable-nodpi/ic_launcher_foreground.webp` (o Android não aceita blur/ruído em vetor) e o `HelixLogo` usa `core/designsystem/.../drawable-nodpi/helix_logo.webp`; só muda se o mantenedor pedir.
 
 ## Arquitetura
 Módulos com dependências em uma direção só: `app → features → data → core`. Implementações de `data` são `internal` (o resto vê só a interface `…Repository`). Detalhes em [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -28,13 +28,13 @@ Módulos com dependências em uma direção só: `app → features → data → 
 - Feature não importa outra feature; o compartilhado sobe para core/data. Navegação entre features passa pelo `app` (por isso a lista de um álbum é a `CollectionScreen` de `features/photos`, aberta pelo `app` a pedido de `features/albums`).
 - Mídia só via `data/media`. Core sem regra de negócio. Classes de `core/model` são puras (nada de `android.*`).
 - Código novo vai para o módulo da responsabilidade dele. Sem módulo adequado, **perguntar antes** de criar um ou de usar um "quase certo".
-- Dependência nova só em `gradle/libs.versions.toml`, e só justificada; conferir na documentação oficial que a versão existe. Aprovadas: Coil (imagens), Room (só quando um recurso exigir, previsto na limpeza).
+- Dependência nova só em `gradle/libs.versions.toml`, e só justificada; conferir na documentação oficial que a versão existe. Aprovadas: Coil (imagens), Zip4j (ZIP AES-256 do cofre), Room (só quando um recurso exigir, previsto na limpeza).
 - Configuração repetida vai para os plugins de `build-logic/`. AGP 9 tem Kotlin embutido: nunca aplicar `org.jetbrains.kotlin.android`; sem `kapt` (KSP).
 - Dados da pessoa ficam em DataStore/arquivos. Mudança no formato do que já está guardado **sempre** com migração escrita e testada.
 
 ## Limites do app (não mudam)
 - **Local primeiro:** nenhuma foto sai do aparelho sem a pessoa pedir (compartilhar). Sem IA no aparelho por ora (decisão do mantenedor; pode mudar). Backup em nuvem só depois do local.
-- **Permissões:** `READ_MEDIA_IMAGES` e `READ_MEDIA_VIDEO` (`READ_EXTERNAL_STORAGE` até o Android 12L), `MANAGE_MEDIA` opcional (pessoa libera nas configurações do Android; tira a caixa de confirmação ao apagar), `INTERNET` só para o aviso de versão nova. Acesso total às fotos: **sem** o acesso parcial do Android 14. Nada de localização, câmera, microfone ou contatos sem decisão do mantenedor.
+- **Permissões:** `READ_MEDIA_IMAGES` e `READ_MEDIA_VIDEO` (`READ_EXTERNAL_STORAGE` até o Android 12L), `MANAGE_MEDIA` opcional (pessoa libera nas configurações do Android; tira a caixa de confirmação ao apagar), `INTERNET` só para o aviso de versão nova, `USE_BIOMETRIC` só para o desbloqueio do cofre. Acesso total às fotos: **sem** o acesso parcial do Android 14. Nada de localização, câmera, microfone ou contatos sem decisão do mantenedor.
 - Favoritos e lixeira são os **do sistema** (MediaStore): valem em outros apps. Apagar e lixeira passam pela caixa do sistema (`createTrashRequest`/`createDeleteRequest`/`createFavoriteRequest`).
 - Identidade visual própria: inspiração de layout pode, copiar marca ou visual de outro app não.
 
@@ -46,6 +46,7 @@ Módulos com dependências em uma direção só: `app → features → data → 
 - Componentes do `androidx.compose.material3`; componente próprio só sem equivalente, em `core/designsystem`. APIs experimentais só dentro de `core/designsystem`, embrulhadas.
 - Paleta própria da Nebulosa da Hélice (azul-noite, ciano, âmbar, magenta); tema escuro por padrão; claro, escuro e AMOLED; cor dinâmica é opção (Ajustes → Aparência).
 - **Navegação (modelo do Boom):** as abas (`tab/photos|albums|search`) são destinos do NavHost com `saveState`/`restoreState` (por isso lembram a posição); direção das animações decidida por `isBackNavigation` na pilha; voltar fica bloqueado enquanto a tela anima; tocar na aba aberta sobe ao topo (`LocalTabReselect`/`ScrollToTopOnReselect`). Ajustes: home por categorias → `settings/appearance|gallery|system|about`, escolhas como `RadioButton` (nunca `DropdownMenu`); ícones novos vêm dos traçados do Boom em `HelixIcons`.
+- **Cofre (etapa 4):** `data/vault` (ZIP AES-256 com zip4j, arquivo `Documents/HelixGallery/HelixVault.zip` via MediaStore; cópia de trabalho só no cache enquanto aberto, apagada ao trancar) e `features/vault`. Originais só saem do aparelho (`deleteRequest`) depois de gravados no cofre. Desbloqueio rápido: senha cifrada com chave do Keystore que exige biometria/PIN (30 s); sem isso vale a senha digitada. O cofre tranca ao sair da tela e ao ir para segundo plano.
 - **Abrir com:** `ExternalViewerActivity` (VIEW em `image/*` e `video/*`, content/file) mostra o arquivo em tela própria, fora da navegação; recusa `file://` da pasta de dados do app.
 - Todo movimento usa `helixSpatialSpec`/`helixFastSpatialSpec`/`helixEffectsSpec`/`helixScreenSpec` (nada de `tween(300)` à mão).
 - Painéis de baixo sempre `HelixModalSheet` (voltar do app, nunca o do M3). Menu dos 3 pontinhos = painel emergente (`HelixMoreMenu`/`HelixMenuSheet`), nunca `DropdownMenu`. Telas de dentro: `HelixSubPage` (título grande + botão de voltar flutuante).

@@ -84,6 +84,7 @@ fun CollectionScreen(
     onOpenSettings: (() -> Unit)? = null,
     bottomInset: Boolean = false,
     reselectTab: String? = null,
+    onMoveToVault: ((List<MediaItem>) -> Unit)? = null,
     viewModel: CollectionViewModel = viewModel(key = "collection_${source.key}"),
 ) {
     val context = LocalContext.current
@@ -196,6 +197,12 @@ fun CollectionScreen(
                 onFavorite = { favorite ->
                     launch(viewModel.repository.favoriteRequest(selectedItems.map { it.uri }, favorite))
                 },
+                onMoveToVault = onMoveToVault?.let { move ->
+                    {
+                        move(selectedItems)
+                        viewModel.clearSelection()
+                    }
+                },
                 onTrash = {
                     launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, !inTrash))
                 },
@@ -218,6 +225,7 @@ private fun SelectionBar(
     onClose: () -> Unit,
     onShare: () -> Unit,
     onFavorite: (Boolean) -> Unit,
+    onMoveToVault: (() -> Unit)?,
     onTrash: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -251,6 +259,11 @@ private fun SelectionBar(
                     if (allFavorite) Icons.Filled.FavoriteBorder else Icons.Filled.Favorite,
                     contentDescription = stringResource(if (allFavorite) R.string.photos_unfavorite else R.string.photos_favorite),
                 )
+            }
+        }
+        if (!inTrash && onMoveToVault != null) {
+            IconButton(onClick = onMoveToVault) {
+                Icon(HelixIcons.Lock, contentDescription = stringResource(R.string.photos_move_to_vault))
             }
         }
         IconButton(onClick = onTrash) {

@@ -21,6 +21,8 @@ datastore = "1.2.1"
 # Coil 3: imagens da grade e do visualizador (pedido e aprovado pelo mantenedor).
 # 3.6.3 é a estável mais nova (18/09/2026, conferida no changelog oficial); exige minSdk 23.
 coil = "3.6.3"
+# Cofre: ZIP com criptografia AES-256 (Java puro, sem código nativo; 2.11.5 conferida no Maven Central).
+zip4j = "2.11.5"
 
 [libraries]
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidxCore" }
@@ -42,6 +44,7 @@ androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.re
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-video = { group = "io.coil-kt.coil3", name = "coil-video", version.ref = "coil" }
+zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 
 # Usados só pelo build-logic (plugins de convenção).

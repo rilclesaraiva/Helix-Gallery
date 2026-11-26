@@ -78,6 +78,7 @@ dependencies {
     implementation(project(":features:viewer"))
     implementation(project(":features:search"))
     implementation(project(":features:settings"))
+    implementation(project(":features:vault"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)

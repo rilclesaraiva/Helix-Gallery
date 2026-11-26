@@ -18,4 +18,5 @@
     <string name="photos_empty">Aún no hay nada aquí.</string>
     <string name="photos_empty_trash">La papelera está vacía. Los elementos se quedan aquí 30 días.</string>
     <string name="photos_settings">Ajustes</string>
+    <string name="photos_move_to_vault">Mover a la caja fuerte</string>
 </resources>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_title">Vault</string>
+    <string name="vault_create_intro">Create a password for your vault. Your private photos and videos are kept in an encrypted file (AES-256) in the Documents/HelixGallery folder. There is no password recovery.</string>
+    <string name="vault_password">Password</string>
+    <string name="vault_confirm">Confirm password</string>
+    <string name="vault_create">Create vault</string>
+    <string name="vault_error_short">Use at least %d characters.</string>
+    <string name="vault_error_mismatch">The passwords don\'t match.</string>
+    <string name="vault_save_title">Save your password</string>
+    <string name="vault_save_body">This is the only time it is shown. If you lose it, nobody can open the vault. After uninstalling the app, this password is the only way to open the file in any ZIP app.</string>
+    <string name="vault_copy">Copy password</string>
+    <string name="vault_copied">Password copied</string>
+    <string name="vault_saved_ack">I saved my password</string>
+    <string name="vault_locked_intro">Enter your password to open the vault.</string>
+    <string name="vault_unlock">Unlock</string>
+    <string name="vault_wrong_password">Wrong password.</string>
+    <string name="vault_quick_unlock">Unlock with biometrics or PIN</string>
+    <string name="vault_auth_title">Unlock the vault</string>
+    <string name="vault_empty">The vault is empty. In the gallery, select photos and choose Move to vault.</string>
+    <string name="vault_lock">Lock the vault</string>
+    <string name="vault_quick_on">Turn on quick unlock</string>
+    <string name="vault_quick_off">Turn off quick unlock</string>
+    <string name="vault_restore">Restore to gallery</string>
+    <string name="vault_delete">Delete from vault</string>
+    <string name="vault_clear_selection">Clear selection</string>
+    <string name="vault_cancel">Cancel</string>
+    <string name="vault_delete_title">Delete permanently?</string>
+    <string name="vault_delete_body">These files will be deleted from the vault. This can\'t be undone.</string>
+    <string name="vault_working">Working…</string>
+    <string name="vault_failed">Something went wrong. Nothing was lost.</string>
+    <plurals name="vault_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="vault_pending">
+        <item quantity="one">%d item will be added when you unlock.</item>
+        <item quantity="other">%d items will be added when you unlock.</item>
+    </plurals>
+    <plurals name="vault_add_failed">
+        <item quantity="one">%d item could not be added and stayed in your gallery.</item>
+        <item quantity="other">%d items could not be added and stayed in your gallery.</item>
+    </plurals>
+    <plurals name="vault_restored">
+        <item quantity="one">%d item restored to the gallery</item>
+        <item quantity="other">%d items restored to the gallery</item>
+    </plurals>
+</resources>

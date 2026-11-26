@@ -7,6 +7,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **New app icon:** the Helix Nebula with its full glow and texture.
 - **Top buttons float:** Settings and the ⋮ menu now sit in translucent circles over the page, like the back button, instead of scrolling with the title.
 - **Readable text and icons:** text and icons that were drawn in pure black (for example the top buttons) now use the theme colors.
 - **No more waiting on screen changes:** tapping or going back right after opening a screen responds immediately.
@@ -20,6 +21,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Added
+- **Vault:** keep private photos and videos in a password-protected ZIP file (AES-256) in the Documents/HelixGallery folder. You create the password once and it is shown a single time (there is no recovery). Open it with the password or with your fingerprint, face or phone PIN. Select photos in the gallery and tap the lock to move them in; originals are only deleted after they are safely stored. You can restore items to the gallery or delete them. After uninstalling the app, any ZIP app can open the file with your password.
 - **Open with:** Helix Gallery now appears in the "Open with" list for photos and videos from other apps and opens them right away, with zoom for photos and controls for videos. Closing it takes you back to the app you came from.
 - **First version of Helix Gallery:** a photo and video gallery for Android 12 and newer, in Material 3 Expressive, with the colors of the Helix Nebula. Everything stays on your device.
 - **Photos tab:** all your photos and videos, newest first, with three layouts (regular, by day, by month), 3 to 5 columns and a fast-scroll handle that shows the month and year while you drag.

@@ -60,6 +60,7 @@ import com.helixgallery.core.model.isScreenshot
 fun AlbumsScreen(
     onOpenCollection: (MediaSource) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenVault: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AlbumsViewModel = viewModel(),
 ) {
@@ -110,6 +111,7 @@ fun AlbumsScreen(
                         QuickRow(Icons.Filled.Delete, stringResource(R.string.albums_trash), state.trashed.size) {
                             onOpenCollection(MediaSource.Trash)
                         }
+                        QuickRow(HelixIcons.Lock, stringResource(R.string.albums_vault), null, onOpenVault)
                     }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -161,7 +163,7 @@ fun AlbumsScreen(
 }
 
 @Composable
-private fun QuickRow(icon: ImageVector, title: String, count: Int, onClick: () -> Unit) {
+private fun QuickRow(icon: ImageVector, title: String, count: Int?, onClick: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.extraLarge,
@@ -177,11 +179,13 @@ private fun QuickRow(icon: ImageVector, title: String, count: Int, onClick: () -
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f).padding(start = 16.dp),
             )
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (count != null) {
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

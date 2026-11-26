@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_title">Caja fuerte</string>
+    <string name="vault_create_intro">Crea una contraseña para tu caja fuerte. Tus fotos y videos privados se guardan en un archivo cifrado (AES-256) en la carpeta Documents/HelixGallery. No hay recuperación de contraseña.</string>
+    <string name="vault_password">Contraseña</string>
+    <string name="vault_confirm">Confirmar contraseña</string>
+    <string name="vault_create">Crear caja fuerte</string>
+    <string name="vault_error_short">Usa al menos %d caracteres.</string>
+    <string name="vault_error_mismatch">Las contraseñas no coinciden.</string>
+    <string name="vault_save_title">Guarda tu contraseña</string>
+    <string name="vault_save_body">Esta es la única vez que se muestra. Si la pierdes, nadie puede abrir la caja fuerte. Tras desinstalar la app, esta contraseña es la única forma de abrir el archivo en cualquier programa de ZIP.</string>
+    <string name="vault_copy">Copiar contraseña</string>
+    <string name="vault_copied">Contraseña copiada</string>
+    <string name="vault_saved_ack">Ya guardé mi contraseña</string>
+    <string name="vault_locked_intro">Escribe tu contraseña para abrir la caja fuerte.</string>
+    <string name="vault_unlock">Desbloquear</string>
+    <string name="vault_wrong_password">Contraseña incorrecta.</string>
+    <string name="vault_quick_unlock">Desbloquear con biometría o PIN</string>
+    <string name="vault_auth_title">Desbloquear la caja fuerte</string>
+    <string name="vault_empty">La caja fuerte está vacía. En la galería, selecciona fotos y elige Mover a la caja fuerte.</string>
+    <string name="vault_lock">Bloquear la caja fuerte</string>
+    <string name="vault_quick_on">Activar desbloqueo rápido</string>
+    <string name="vault_quick_off">Desactivar desbloqueo rápido</string>
+    <string name="vault_restore">Devolver a la galería</string>
+    <string name="vault_delete">Eliminar de la caja fuerte</string>
+    <string name="vault_clear_selection">Borrar selección</string>
+    <string name="vault_cancel">Cancelar</string>
+    <string name="vault_delete_title">¿Eliminar definitivamente?</string>
+    <string name="vault_delete_body">Estos archivos se eliminarán de la caja fuerte. No se puede deshacer.</string>
+    <string name="vault_working">Trabajando…</string>
+    <string name="vault_failed">Algo salió mal. No se perdió nada.</string>
+    <plurals name="vault_selected">
+        <item quantity="one">%d seleccionado</item>
+        <item quantity="other">%d seleccionados</item>
+    </plurals>
+    <plurals name="vault_pending">
+        <item quantity="one">%d elemento se añadirá al desbloquear.</item>
+        <item quantity="other">%d elementos se añadirán al desbloquear.</item>
+    </plurals>
+    <plurals name="vault_add_failed">
+        <item quantity="one">%d elemento no se pudo añadir y quedó en tu galería.</item>
+        <item quantity="other">%d elementos no se pudieron añadir y quedaron en tu galería.</item>
+    </plurals>
+    <plurals name="vault_restored">
+        <item quantity="one">%d elemento devuelto a la galería</item>
+        <item quantity="other">%d elementos devueltos a la galería</item>
+    </plurals>
+</resources>

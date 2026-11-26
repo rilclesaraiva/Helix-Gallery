@@ -7,4 +7,5 @@
     <string name="albums_screenshots">Capturas de pantalla</string>
     <string name="albums_trash">Papelera</string>
     <string name="albums_on_device">En tu dispositivo</string>
+    <string name="albums_vault">Caja fuerte</string>
 </resources>
