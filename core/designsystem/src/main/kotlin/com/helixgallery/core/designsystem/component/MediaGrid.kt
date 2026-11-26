@@ -50,6 +50,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import androidx.compose.ui.unit.IntOffset
