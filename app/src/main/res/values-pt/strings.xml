@@ -9,7 +9,7 @@
     <string name="collection_screenshots">Capturas de tela</string>
     <string name="collection_trash">Lixeira</string>
     <string name="permission_title">Suas fotos, no seu aparelho</string>
-    <string name="permission_body">O Helix Gallery precisa de acesso a todas as suas fotos e vídeos para mostrá-los. Nada sai do seu aparelho.</string>
+    <string name="permission_body">O Helix Gallery precisa de acesso a todas as suas fotos e vídeos para mostrá-los. Nada sai do seu aparelho. Em seguida, o Android também vai perguntar se o app pode gerenciar mídia, para que mover para a lixeira e apagar não mostrem um painel de confirmação toda vez (dá para desligar em Ajustes).</string>
     <string name="permission_allow">Permitir acesso</string>
     <string name="permission_settings">Abrir ajustes do app</string>
 </resources>

@@ -34,7 +34,7 @@ Módulos com dependências em uma direção só: `app → features → data → 
 
 ## Limites do app (não mudam)
 - **Local primeiro:** nenhuma foto sai do aparelho sem a pessoa pedir (compartilhar). Sem IA no aparelho por ora (decisão do mantenedor; pode mudar). Backup em nuvem só depois do local.
-- **Permissões:** `READ_MEDIA_IMAGES` e `READ_MEDIA_VIDEO` (`READ_EXTERNAL_STORAGE` até o Android 12L), `MANAGE_MEDIA` opcional (pessoa libera nas configurações do Android; tira a caixa de confirmação ao apagar), `INTERNET` só para o aviso de versão nova, `USE_BIOMETRIC` só para o desbloqueio do cofre. Acesso total às fotos: **sem** o acesso parcial do Android 14. Nada de localização, câmera, microfone ou contatos sem decisão do mantenedor.
+- **Permissões:** `READ_MEDIA_IMAGES` e `READ_MEDIA_VIDEO` (`READ_EXTERNAL_STORAGE` até o Android 12L), `MANAGE_MEDIA` pedido uma vez na primeira abertura, logo após o acesso às fotos (a pessoa pode negar; Ajustes → Galeria → Apagar muda depois; tira a caixa de confirmação ao apagar), `INTERNET` só para o aviso de versão nova, `USE_BIOMETRIC` só para o desbloqueio do cofre. Acesso total às fotos: **sem** o acesso parcial do Android 14. Nada de localização, câmera, microfone ou contatos sem decisão do mantenedor.
 - Favoritos e lixeira são os **do sistema** (MediaStore): valem em outros apps. Apagar e lixeira passam pela caixa do sistema (`createTrashRequest`/`createDeleteRequest`/`createFavoriteRequest`).
 - Identidade visual própria: inspiração de layout pode, copiar marca ou visual de outro app não.
 

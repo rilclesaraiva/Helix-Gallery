@@ -15,6 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -99,21 +104,29 @@ fun AlbumsScreen(
                     }) { titleRow() }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        QuickRow(Icons.Filled.Favorite, stringResource(R.string.albums_favorites), favorites) {
+                    // Atalhos compactos em uma linha que rola para o lado (como os "Fixados" do Google Fotos).
+                    Row(
+                        Modifier.layout { m, c ->
+                            val extra = 16.dp.roundToPx() * 2
+                            val p = m.measure(c.copy(maxWidth = c.maxWidth + extra))
+                            layout(c.maxWidth, p.height) { p.place(-extra / 2, 0) }
+                        }.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        ShortcutTile(Icons.Filled.Favorite, stringResource(R.string.albums_favorites), favorites) {
                             onOpenCollection(MediaSource.Favorites)
                         }
-                        QuickRow(HelixIcons.Videocam, stringResource(R.string.albums_videos), videos) {
+                        ShortcutTile(HelixIcons.Videocam, stringResource(R.string.albums_videos), videos) {
                             onOpenCollection(MediaSource.Videos)
                         }
-                        QuickRow(HelixIcons.Photo, stringResource(R.string.albums_screenshots), screenshots) {
+                        ShortcutTile(HelixIcons.Photo, stringResource(R.string.albums_screenshots), screenshots) {
                             onOpenCollection(MediaSource.Screenshots)
                         }
-                        QuickRow(Icons.Filled.Delete, stringResource(R.string.albums_trash), state.trashed.size) {
+                        ShortcutTile(Icons.Filled.Delete, stringResource(R.string.albums_trash), state.trashed.size) {
                             onOpenCollection(MediaSource.Trash)
                         }
-                        QuickRow(HelixIcons.Lock, stringResource(R.string.albums_vault), null, onOpenVault)
-                        QuickRow(HelixIcons.AutoFix, stringResource(R.string.albums_cleanup), null, onOpenCleanup)
+                        ShortcutTile(HelixIcons.Lock, stringResource(R.string.albums_vault), null, onOpenVault)
+                        ShortcutTile(HelixIcons.AutoFix, stringResource(R.string.albums_cleanup), null, onOpenCleanup)
                     }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -125,29 +138,33 @@ fun AlbumsScreen(
                     )
                 }
                 items(albums, key = { it.bucketId }) { album ->
-                    Column(
-                        Modifier.clip(MaterialTheme.shapes.extraLarge).clickable {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier.clip(MaterialTheme.shapes.extraLarge).clickable {
                             onOpenCollection(MediaSource.Album(album.bucketId))
                         },
                     ) {
-                        HelixImage(
-                            uri = album.cover.uri,
-                            modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.extraLarge),
-                        )
-                        Text(
-                            text = album.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 6.dp, top = 8.dp),
-                        )
-                        Text(
-                            text = album.count.toString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 6.dp, bottom = 4.dp),
-                        )
+                        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            HelixImage(
+                                uri = album.cover.uri,
+                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.large),
+                            )
+                            Text(
+                                text = album.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                            Text(
+                                text = pluralStringResource(R.plurals.albums_items, album.count, album.count),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -165,29 +182,32 @@ fun AlbumsScreen(
 }
 
 @Composable
-private fun QuickRow(icon: ImageVector, title: String, count: Int?, onClick: () -> Unit) {
+private fun ShortcutTile(icon: ImageVector, title: String, count: Int?, onClick: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.extraLarge,
-        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick),
+        modifier = Modifier.width(92.dp).clip(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick),
     ) {
-        Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Column(Modifier.padding(vertical = 14.dp, horizontal = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
             }
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f).padding(start = 16.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 10.dp),
             )
-            if (count != null) {
-                Text(
-                    text = count.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = count?.toString() ?: " ",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

@@ -9,7 +9,7 @@
     <string name="collection_screenshots">Screenshots</string>
     <string name="collection_trash">Trash</string>
     <string name="permission_title">Your photos, on your device</string>
-    <string name="permission_body">Helix Gallery needs access to all your photos and videos to show them. Nothing leaves your device.</string>
+    <string name="permission_body">Helix Gallery needs access to all your photos and videos to show them. Nothing leaves your device. Next, Android will also ask whether the app can manage media, so moving to trash and deleting don\'t show a confirmation panel every time (you can turn it off in Settings).</string>
     <string name="permission_allow">Allow access</string>
     <string name="permission_settings">Open app settings</string>
 </resources>

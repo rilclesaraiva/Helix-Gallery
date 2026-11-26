@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,12 +42,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import com.helixgallery.core.designsystem.component.HelixIcons
-import com.helixgallery.core.designsystem.component.HelixSeekBar
 import com.helixgallery.core.designsystem.component.formatDuration
 import kotlinx.coroutines.delay
 
 /** Intervalo de atualização da barra de progresso. */
-private const val PROGRESS_POLL_MS = 200L
+private const val PROGRESS_POLL_MS = 250L
 
 /**
  * Vídeo com os controles do app (a barra de progresso é a do BoomListener, não a do Media3).
@@ -61,15 +61,18 @@ fun VideoPage(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    // Onde o vídeo estava e se estava tocando: sobrevive se o Android recriar a tela (ex.: girar).
+    var savedPositionMs by rememberSaveable(uri) { mutableLongStateOf(0L) }
+    var wantsPlay by rememberSaveable(uri) { mutableStateOf(true) }
     val player = remember(uri) {
         ExoPlayer.Builder(context).build().apply {
-            setMediaItem(ExoMediaItem.fromUri(Uri.parse(uri)))
+            setMediaItem(ExoMediaItem.fromUri(Uri.parse(uri)), savedPositionMs)
             prepare()
         }
     }
     DisposableEffect(player) { onDispose { player.release() } }
     LaunchedEffect(isCurrent) {
-        if (isCurrent) player.play() else player.pause()
+        if (isCurrent && wantsPlay) player.play() else player.pause()
     }
 
     var playing by remember(player) { mutableStateOf(false) }
@@ -81,6 +84,15 @@ fun VideoPage(
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playing = isPlaying
             }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                // Só o que a pessoa escolheu (play/pause) conta; pausar ao sair da página não.
+                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST ||
+                    reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM
+                ) {
+                    wantsPlay = playWhenReady
+                }
+            }
         }
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
@@ -89,6 +101,7 @@ fun VideoPage(
         while (isCurrent) {
             positionMs = player.currentPosition.coerceAtLeast(0L)
             durationMs = player.duration.coerceAtLeast(0L)
+            if (player.playbackState != Player.STATE_ENDED) savedPositionMs = positionMs
             delay(PROGRESS_POLL_MS)
         }
     }
@@ -117,7 +130,19 @@ fun VideoPage(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 HelixFloatingCircle {
-                    IconButton(onClick = { if (player.isPlaying) player.pause() else player.play() }) {
+                    IconButton(
+                        onClick = {
+                            when {
+                                player.isPlaying -> player.pause()
+                                // Chegou ao fim: tocar de novo recomeça do início.
+                                player.playbackState == Player.STATE_ENDED -> {
+                                    player.seekTo(0L)
+                                    player.play()
+                                }
+                                else -> player.play()
+                            }
+                        },
+                    ) {
                         Icon(
                             if (playing) HelixIcons.Pause else Icons.Filled.PlayArrow,
                             contentDescription = stringResource(if (playing) R.string.viewer_pause else R.string.viewer_play),
@@ -125,9 +150,11 @@ fun VideoPage(
                     }
                 }
                 Box(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                    HelixSeekBar(
-                        progress = if (durationMs > 0) positionMs.toFloat() / durationMs else 0f,
+                    SmoothSeekBar(
+                        positionMs = positionMs,
+                        durationMs = durationMs,
                         isPlaying = playing,
+                        speed = 1f,
                         onSeek = { fraction ->
                             val target = (fraction * durationMs).toLong()
                             player.seekTo(target)

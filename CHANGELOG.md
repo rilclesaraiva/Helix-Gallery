@@ -21,9 +21,13 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Videos: pressing play after the video ended restarts it, and rotating the screen no longer sends the video back to the start.
+- Photos: layout changes happen only by pinching (the ⋮ button is gone), and the photos now slide into their new places instead of jumping.
+- Viewer: the bottom bar now spans the screen with labeled actions (Share, Edit, Trash) like Google Photos, and Favorite moved to the top.
 - Vault: opening a photo or video inside the vault no longer locks it (it showed a black screen and asked for the password again). The vault now locks only when you leave the app or the screen.
 
 ### Added
+- **Delete without asking is requested on first launch**, right after photo access (Settings → Gallery → Deleting lets you turn it off). The video progress bar now glides smoothly like BoomListener's, and the Albums screen has compact shortcuts above a grid of album cards.
 - Settings → Gallery → Deleting: shortcut to allow "Delete without asking", so moving to trash and deleting no longer show Android's confirmation panel.
 - **Photo editor:** open a photo, tap ⋮ → Edit to rotate, flip, crop (1:1, 4:3, 3:4, 16:9 or the original shape, with zoom), adjust brightness, contrast and color, or apply a filter. It saves a copy next to the original; the original never changes.
 - **Backup:** in Settings → System, save all your photos and videos into one ZIP file in a place you pick (phone folder, SD card or a cloud app's folder), and restore from a ZIP later. Photos already in the gallery are skipped. Nothing is sent by the app.

@@ -13,7 +13,7 @@ Helix Gallery is a free, open-source gallery app (GPL-3.0). This page says what 
 
 ## Permissions
 - **Photos and videos** (`READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`; on Android 12, storage read access): to list and show your media. The app asks for full access.
-- **Media management** (`MANAGE_MEDIA`, optional): if you allow it in Android settings, the app can move items to the trash or delete them without Android asking each time. Without it, Android asks and nothing else changes.
+- **Media management** (`MANAGE_MEDIA`, optional): if you allow it (the app asks once on first launch; you can change it any time in Android settings), the app can move items to the trash or delete them without Android asking each time. Without it, Android asks and nothing else changes.
 - **Biometrics** (`USE_BIOMETRIC`): lets the vault ask Android to check your fingerprint, face or screen lock. Android does the check; the app never receives your biometric data.
 - **Internet:** used only to ask GitHub whether a newer version exists (the latest release of the project's repository). The request carries the app name and version, as any web request carries them, and nothing from your gallery.
 

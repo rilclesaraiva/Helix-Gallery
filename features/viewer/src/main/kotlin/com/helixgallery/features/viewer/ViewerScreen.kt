@@ -16,6 +16,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import com.helixgallery.core.designsystem.component.HelixFloatingCircle
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -214,6 +218,19 @@ private fun ViewerContent(
                     )
                 }
                 Spacer(Modifier.weight(1f))
+                if (!inTrash) {
+                    HelixFloatingCircle {
+                        IconButton(onClick = ::toggleFavorite) {
+                            Icon(
+                                if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = stringResource(
+                                    if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite,
+                                ),
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                }
                 HelixMoreMenu(actions = menuActions)
             }
         }
@@ -224,27 +241,28 @@ private fun ViewerContent(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
+            // Barra inferior no padrão do Google Fotos: de ponta a ponta, ícone com rótulo embaixo
+            // (diferente da barra flutuante da tela inicial).
             Surface(
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = MaterialTheme.shapes.extraLarge.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FLOATING_BUTTON_ALPHA),
                 contentColor = MaterialTheme.colorScheme.onSurface,
-                shadowElevation = 3.dp,
-                modifier = Modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp)) {
                     if (!inTrash) {
-                        BarButton(Icons.Filled.Share, stringResource(R.string.viewer_share)) { share() }
-                        BarButton(
-                            if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            stringResource(if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite),
-                        ) { toggleFavorite() }
+                        LabeledBarButton(Icons.Filled.Share, stringResource(R.string.viewer_share), Modifier.weight(1f)) { share() }
+                        if (!current.isVideo && onEdit != null) {
+                            LabeledBarButton(Icons.Filled.Edit, stringResource(R.string.viewer_edit), Modifier.weight(1f)) { onEdit(current) }
+                        }
                     }
-                    BarButton(
+                    LabeledBarButton(
                         if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
                         stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
+                        Modifier.weight(1f),
                     ) { trashOrRestore() }
                     if (inTrash) {
-                        BarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever)) { deleteForever() }
+                        LabeledBarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever), Modifier.weight(1f)) { deleteForever() }
                     }
                 }
             }
@@ -257,13 +275,18 @@ private fun ViewerContent(
 }
 
 @Composable
-private fun BarButton(
+private fun LabeledBarButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    description: String,
+    label: String,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick) {
-        Icon(icon, contentDescription = description)
+    Column(
+        modifier.clip(MaterialTheme.shapes.large).clickable(onClick = onClick).padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(icon, contentDescription = null)
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
     }
 }
 

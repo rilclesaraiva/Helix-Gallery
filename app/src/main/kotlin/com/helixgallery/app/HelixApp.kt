@@ -4,6 +4,9 @@
 package com.helixgallery.app
 
 import android.content.Intent
+import androidx.compose.runtime.LaunchedEffect
+import android.provider.MediaStore
+import android.content.Context
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -112,6 +115,12 @@ fun HelixApp() {
     // A pessoa pode liberar nos ajustes do Android e voltar para o app.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { granted = hasMediaAccess(context) }
 
+    // Com o acesso às fotos liberado, pede uma vez a permissão de apagar sem painel (a pessoa pode
+    // negar; em Ajustes → Galeria dá para mudar depois).
+    LaunchedEffect(granted) {
+        if (granted) askManageMediaOnce(context)
+    }
+
     if (granted) {
         HelixNavigation()
         UpdatePromptHost()
@@ -124,6 +133,22 @@ fun HelixApp() {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             },
+        )
+    }
+}
+
+private const val PREFS_NAME = "helix_permissions"
+private const val KEY_ASKED_MANAGE_MEDIA = "asked_manage_media"
+
+/** Abre uma única vez a tela do Android que libera "gerenciar mídia" (apagar e lixeira sem confirmação). */
+private fun askManageMediaOnce(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    if (prefs.getBoolean(KEY_ASKED_MANAGE_MEDIA, false) || MediaStore.canManageMedia(context)) return
+    prefs.edit().putBoolean(KEY_ASKED_MANAGE_MEDIA, true).apply()
+    runCatching {
+        context.startActivity(
+            Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA, Uri.parse("package:${context.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
 }

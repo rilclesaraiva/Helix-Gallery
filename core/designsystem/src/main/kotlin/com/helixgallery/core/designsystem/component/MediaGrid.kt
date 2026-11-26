@@ -42,6 +42,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import androidx.compose.ui.unit.IntOffset
 import com.helixgallery.core.designsystem.R
 import com.helixgallery.core.designsystem.theme.helixFastSpatialSpec
 import com.helixgallery.core.model.GridEntry
@@ -94,6 +97,9 @@ fun MediaGrid(
     onZoomStep: ((zoomOut: Boolean) -> Unit)? = null,
 ) {
     val selecting = selectedIds.isNotEmpty()
+    // Ao pinçar, as fotos deslizam para o novo lugar (em vez de pular).
+    val placementSpec = helixSpatialSpec<IntOffset>()
+    val fadeSpec = helixEffectsSpec<Float>()
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = state,
@@ -133,9 +139,11 @@ fun MediaGrid(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
+                    modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec)
+                        .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
                 )
                 is GridEntry.Media -> MediaTile(
+                    modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec),
                     item = entry.item,
                     selected = entry.item.id in selectedIds,
                     selecting = selecting,

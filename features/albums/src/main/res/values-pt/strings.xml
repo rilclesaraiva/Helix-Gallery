@@ -9,4 +9,8 @@
     <string name="albums_on_device">No seu aparelho</string>
     <string name="albums_vault">Cofre</string>
     <string name="albums_cleanup">Limpeza</string>
+    <plurals name="albums_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d itens</item>
+    </plurals>
 </resources>

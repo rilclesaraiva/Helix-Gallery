@@ -107,31 +107,11 @@ fun CollectionScreen(
     BackHandler(enabled = selectedIds.isNotEmpty()) { viewModel.clearSelection() }
 
     val pageTitle = title ?: items.firstOrNull()?.bucketName.orEmpty()
-    val layoutActions = listOf(
-        HelixMenuAction(
-            label = stringResource(R.string.photos_layout_regular),
-            icon = HelixIcons.Photo,
-            selected = prefs.gridLayout == GridLayout.Regular,
-            onClick = { viewModel.setLayout(GridLayout.Regular) },
-        ),
-        HelixMenuAction(
-            label = stringResource(R.string.photos_layout_day),
-            icon = HelixIcons.Collections,
-            selected = prefs.gridLayout == GridLayout.Day,
-            onClick = { viewModel.setLayout(GridLayout.Day) },
-        ),
-        HelixMenuAction(
-            label = stringResource(R.string.photos_layout_month),
-            icon = HelixIcons.Collections,
-            selected = prefs.gridLayout == GridLayout.Month,
-            onClick = { viewModel.setLayout(GridLayout.Month) },
-        ),
-    )
     val titleRow: @Composable () -> Unit = {
         HelixPageTitle(
             title = pageTitle,
             hasBack = onBack != null,
-            actionsInset = helixActionsInset(if (onOpenSettings != null) 2 else 1),
+            actionsInset = helixActionsInset(if (onOpenSettings != null) 1 else 0),
         )
     }
 
@@ -177,7 +157,6 @@ fun CollectionScreen(
                         }
                     }
                 }
-                HelixMoreMenu(actions = layoutActions)
             }
         }
         if (selectedIds.isNotEmpty()) {
