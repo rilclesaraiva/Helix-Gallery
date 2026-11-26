@@ -87,6 +87,7 @@ import com.helixgallery.core.model.MediaItem
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.features.cleanup.CleanupScreen
 import com.helixgallery.features.editor.EditorScreen
+import com.helixgallery.features.editor.VideoEditorScreen
 import com.helixgallery.features.vault.VaultScreen
 import com.helixgallery.features.viewer.ExternalViewerScreen
 import com.helixgallery.features.photos.CollectionScreen
@@ -104,7 +105,7 @@ private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_APPEARANCE = "settings/appearance"
 private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
 private const val ROUTE_SYSTEM = "settings/system"
-private const val ROUTE_EDITOR = "editor?uri={uri}&name={name}&path={path}&taken={taken}"
+private const val ROUTE_EDITOR = "editor?uri={uri}&name={name}&path={path}&taken={taken}&video={video}"
 private const val ROUTE_CLEANUP = "cleanup"
 private const val ROUTE_VAULT = "vault"
 private const val ROUTE_VAULT_VIEW = "vault/view?uri={uri}&video={video}"
@@ -333,7 +334,7 @@ private fun HelixNavigation() {
                         onEdit = { item ->
                             navController.navigateOnce(
                                 "editor?uri=${Uri.encode(item.uri)}&name=${Uri.encode(item.displayName)}" +
-                                    "&path=${Uri.encode(item.relativePath)}&taken=${item.takenMs}",
+                                    "&path=${Uri.encode(item.relativePath)}&taken=${item.takenMs}&video=${item.isVideo}",
                             )
                         },
                     )
@@ -345,9 +346,19 @@ private fun HelixNavigation() {
                         navArgument("name") { type = NavType.StringType },
                         navArgument("path") { type = NavType.StringType },
                         navArgument("taken") { type = NavType.LongType },
+                        navArgument("video") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        },
                     ),
                 ) { entry ->
-                    EditorScreen(
+                    if (entry.arguments?.getBoolean("video") == true) VideoEditorScreen(
+                        uri = entry.arguments?.getString("uri").orEmpty(),
+                        displayName = entry.arguments?.getString("name").orEmpty(),
+                        relativePath = entry.arguments?.getString("path").orEmpty(),
+                        takenMs = entry.arguments?.getLong("taken") ?: 0L,
+                        onClose = { navController.popBackStackOnce() },
+                    ) else EditorScreen(
                         uri = entry.arguments?.getString("uri").orEmpty(),
                         displayName = entry.arguments?.getString("name").orEmpty(),
                         relativePath = entry.arguments?.getString("path").orEmpty(),

@@ -7,6 +7,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Edit videos:** the Edit button now also works on videos — trim the clip, rotate, mute — and saves a copy.
+- **New photos show up right away:** the gallery now watches images and videos live, so a new picture from another app appears without restarting.
+- **Background music comes back:** playing a video pauses other media, and when the video pauses, ends or you leave it, the other player resumes.
 - **Drag to select** now selects the whole range between where you started and where your finger is, like Google Photos; sliding back unselects.
 - **Favorite heart** updates instantly and beats like BoomListener's.
 - **Add to…** is a small panel: Album, a divider, then Vault.
@@ -35,6 +38,8 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Drag to select works again.
+- Trash: photos and videos open with swiping between them.
 - Long-pressing a single photo no longer unselects it when you lift your finger.
 - Playing a video now pauses music and other media playing on the phone.
 - Videos: pressing play after the video ended restarts it, and rotating the screen no longer sends the video back to the start.

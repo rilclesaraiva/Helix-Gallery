@@ -27,4 +27,9 @@
     <string name="editor_saved">Saved a copy in your gallery. The original is unchanged.</string>
     <string name="editor_failed">Could not save the copy.</string>
     <string name="editor_load_failed">Could not open this photo to edit.</string>
+    <string name="editor_video_length">Length %1$s</string>
+    <string name="editor_video_play">Play</string>
+    <string name="editor_video_pause">Pause</string>
+    <string name="editor_video_mute">Mute</string>
+    <string name="editor_video_unmute">Unmute</string>
 </resources>

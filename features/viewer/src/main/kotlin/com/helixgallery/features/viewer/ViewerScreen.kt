@@ -4,6 +4,8 @@
 package com.helixgallery.features.viewer
 
 import android.app.Activity
+import android.provider.MediaStore
+import android.net.Uri
 import android.content.IntentSender
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -134,6 +136,8 @@ private fun ViewerContent(
     var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
     val inTrash = source == MediaSource.Trash
     val current = items[pagerState.currentPage.coerceIn(0, items.lastIndex)]
+    // Itens da lixeira só abrem com "includeTrashed" (sem isso o MediaStore esconde o arquivo).
+    fun displayUri(uri: String): String = if (inTrash) MediaStore.setIncludeTrashed(Uri.parse(uri)).toString() else uri
 
     LaunchedEffect(pagerState.currentPage) { zoomed = false }
 
@@ -185,14 +189,14 @@ private fun ViewerContent(
             val item = items[page.coerceIn(0, items.lastIndex)]
             if (item.isVideo) {
                 VideoPage(
-                    uri = item.uri,
+                    uri = displayUri(item.uri),
                     isCurrent = page == pagerState.currentPage,
                     controlsVisible = chrome,
                     onTap = { chrome = !chrome },
                 )
             } else {
                 ZoomableImage(
-                    uri = item.uri,
+                    uri = displayUri(item.uri),
                     onTap = { chrome = !chrome },
                     onZoomChanged = { if (page == pagerState.currentPage) zoomed = it },
                     onSwipeUp = { if (page == pagerState.currentPage) showDetails() },
@@ -261,7 +265,7 @@ private fun ViewerContent(
                     Row(Modifier.navigationBarsPadding().padding(start = 8.dp, end = 8.dp, top = 24.dp, bottom = 4.dp)) {
                         if (!inTrash) {
                             LabeledBarButton(Icons.Filled.Share, stringResource(R.string.viewer_share), Modifier.weight(1f)) { share() }
-                            if (!current.isVideo && onEdit != null) {
+                            if (onEdit != null) {
                                 LabeledBarButton(Icons.Filled.Edit, stringResource(R.string.viewer_edit), Modifier.weight(1f)) { onEdit(current) }
                             }
                             LabeledBarButton(HelixIcons.Add, stringResource(R.string.viewer_add_to), Modifier.weight(1f)) { addTo = true }

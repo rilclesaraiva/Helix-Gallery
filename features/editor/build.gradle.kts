@@ -13,4 +13,9 @@ dependencies {
     implementation(project(":data:media"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.compose)
+    // Editar vídeo: pré-visualização (ExoPlayer) e exportação (Transformer): cortar, girar, tirar o som.
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
 }

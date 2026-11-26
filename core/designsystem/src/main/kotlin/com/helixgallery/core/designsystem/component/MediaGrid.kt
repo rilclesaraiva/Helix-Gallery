@@ -50,6 +50,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.scrollBy
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
@@ -116,11 +120,19 @@ fun MediaGrid(
     // Ao pinçar, as fotos deslizam para o novo lugar (em vez de pular).
     val placementSpec = helixSpatialSpec<IntOffset>()
     val fadeSpec = helixEffectsSpec<Float>()
+    val suppressClick = remember { mutableStateOf(false) }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = state,
         modifier = (if (onZoomStep != null) modifier.pinchToZoom(onZoomStep) else modifier)
             .fillMaxSize()
+            .pointerInput(Unit) {
+                // Todo toque novo zera a marca (vê o dedo descer antes dos filhos).
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    suppressClick.value = false
+                }
+            }
             .pointerInput(state) {
                 // Segurar numa foto marca; sem soltar, deslizar marca TODO o intervalo (na ordem da grade)
                 // entre a foto onde começou e a que está sob o dedo, como no Google Fotos. Voltar desmarca.
@@ -147,6 +159,7 @@ fun MediaGrid(
                 }
                 detectDragGesturesAfterLongPress(
                     onDragStart = { position ->
+                        suppressClick.value = true
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         order = currentEntries.mapNotNull { (it as? GridEntry.Media)?.item?.id }
                         base = currentSelected
@@ -218,10 +231,11 @@ fun MediaGrid(
                     item = entry.item,
                     selected = entry.item.id in selectedIds,
                     selecting = selecting,
-                    // O segurar é tratado pela grade; um onLongClick vazio impede que soltar o dedo conte como toque (desmarcava).
-                    onLongClick = {},
+
                     onClick = {
-                        if (selecting) onToggleSelect(entry.item) else onOpen(entry.item)
+                        // Soltar o dedo depois de segurar (sem arrastar) não é um toque: senão desmarcava a foto.
+                        if (suppressClick.value) suppressClick.value = false
+                        else if (selecting) onToggleSelect(entry.item) else onOpen(entry.item)
                     },
                 )
             }

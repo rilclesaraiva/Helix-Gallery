@@ -27,4 +27,9 @@
     <string name="editor_saved">Cópia salva na galeria. O original não mudou.</string>
     <string name="editor_failed">Não foi possível salvar a cópia.</string>
     <string name="editor_load_failed">Não foi possível abrir esta foto para editar.</string>
+    <string name="editor_video_length">Duração %1$s</string>
+    <string name="editor_video_play">Tocar</string>
+    <string name="editor_video_pause">Pausar</string>
+    <string name="editor_video_mute">Tirar o som</string>
+    <string name="editor_video_unmute">Pôr o som</string>
 </resources>

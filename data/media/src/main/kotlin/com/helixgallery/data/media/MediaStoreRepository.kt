@@ -45,7 +45,13 @@ internal class MediaStoreRepository(private val context: Context) : MediaReposit
                 trySend(Unit)
             }
         }
-        resolver.registerContentObserver(filesUri, true, observer)
+        // O MediaStore avisa pelas URIs de imagens e vídeos (a das "files" sozinha não pega foto nova de outro app).
+        val watched = listOf(
+            filesUri,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+        )
+        watched.forEach { resolver.registerContentObserver(it, true, observer) }
         awaitClose { resolver.unregisterContentObserver(observer) }
     }
 

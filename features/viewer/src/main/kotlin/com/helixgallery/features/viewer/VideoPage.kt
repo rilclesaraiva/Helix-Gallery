@@ -3,6 +3,8 @@
 
 package com.helixgallery.features.viewer
 
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -48,6 +50,12 @@ import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.formatDuration
 import kotlinx.coroutines.delay
 
+/** Declara que a reprodução é de mídia (vídeo), para o sistema tratar como player. */
+private val VIDEO_AUDIO_ATTRIBUTES = AudioAttributes.Builder()
+    .setUsage(C.USAGE_MEDIA)
+    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+    .build()
+
 /** Intervalo de atualização da barra de progresso. */
 private const val PROGRESS_POLL_MS = 250L
 
@@ -69,19 +77,47 @@ fun VideoPage(
     var wantsPlay by rememberSaveable(uri) { mutableStateOf(true) }
     val player = remember(uri) {
         ExoPlayer.Builder(context).build().apply {
-            // Declara que isto é reprodução de mídia e cuida do foco de áudio: ao tocar, o resto do sistema pausa.
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                    .build(),
-                true,
-            )
+            // O foco de áudio é nosso (abaixo): temporário, para a música de fundo voltar sozinha quando o vídeo parar.
+            setAudioAttributes(VIDEO_AUDIO_ATTRIBUTES, false)
             setMediaItem(ExoMediaItem.fromUri(Uri.parse(uri)), savedPositionMs)
             prepare()
         }
     }
-    DisposableEffect(player) { onDispose { player.release() } }
+    // Foco de áudio TRANSITÓRIO: o que estava tocando (música, outro vídeo) pausa e, ao nosso vídeo pausar,
+    // terminar ou sair da tela, o foco é devolvido e o Android manda aquele player voltar a tocar.
+    val audioManager = remember { context.getSystemService(AudioManager::class.java) }
+    val focusRequest = remember(player) {
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MOVIE)
+                    .build(),
+            )
+            .setOnAudioFocusChangeListener { change ->
+                if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                    player.pause()
+                }
+            }
+            .build()
+    }
+    DisposableEffect(player) {
+        val focusListener = object : Player.Listener {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                if (playWhenReady) audioManager.requestAudioFocus(focusRequest) else audioManager.abandonAudioFocusRequest(focusRequest)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) audioManager.abandonAudioFocusRequest(focusRequest)
+            }
+        }
+        player.addListener(focusListener)
+        onDispose {
+            player.removeListener(focusListener)
+            audioManager.abandonAudioFocusRequest(focusRequest)
+            player.release()
+        }
+    }
     LaunchedEffect(isCurrent) {
         if (isCurrent && wantsPlay) player.play() else player.pause()
     }
