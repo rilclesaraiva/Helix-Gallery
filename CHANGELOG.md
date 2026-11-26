@@ -7,6 +7,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Tabs remember where you were:** Photos, Albums and Search keep their scroll position when you switch tabs or open a photo and come back. Tapping the open tab again scrolls it to the top.
+- **Screen animations:** screens slide in and out following the direction (open or back), the previous screen steps back and fades, and the back gesture follows your finger with the same animation.
+- **Fast-scroll handle no longer jumps:** its position is now measured in pixels per row, so dragging stays steady even with day/month headers between photo rows.
 - **No bars stuck to the top:** screen titles now scroll away with the content and the buttons float over the page with a translucent background. The back button no longer covers titles in Settings.
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 

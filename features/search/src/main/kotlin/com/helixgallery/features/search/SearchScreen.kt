@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.helixgallery.core.designsystem.component.ScrollToTopOnReselect
 import com.helixgallery.core.designsystem.component.GridScrubber
 import com.helixgallery.core.designsystem.component.MediaGrid
 import com.helixgallery.core.model.GridLayout
@@ -50,6 +51,7 @@ fun SearchScreen(
     val results = remember(state.items, query) { searchMedia(state.items, query, Locale.getDefault()) }
     val entries = remember(results) { buildEntries(results, GridLayout.Regular) }
     val gridState = rememberLazyGridState()
+    ScrollToTopOnReselect("tab/search", gridState)
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         TextField(
@@ -94,7 +96,7 @@ fun SearchScreen(
                     state = gridState,
                     contentPadding = PaddingValues(bottom = 112.dp),
                 )
-                GridScrubber(state = gridState, entries = entries, modifier = Modifier.align(Alignment.CenterEnd))
+                GridScrubber(state = gridState, entries = entries, columns = 4, modifier = Modifier.align(Alignment.CenterEnd))
             }
         }
     }

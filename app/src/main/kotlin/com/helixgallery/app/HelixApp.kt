@@ -8,6 +8,33 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.helixgallery.core.designsystem.component.HelixFloatingNav
+import com.helixgallery.core.designsystem.component.HelixIcons
+import com.helixgallery.core.designsystem.component.HelixNavItem
+import com.helixgallery.core.designsystem.component.LocalTabReselect
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import com.helixgallery.features.albums.AlbumsScreen
+import com.helixgallery.features.search.SearchScreen
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -33,7 +60,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -53,7 +79,9 @@ import com.helixgallery.features.settings.SettingsScreen
 import com.helixgallery.features.settings.UpdatePromptHost
 import com.helixgallery.features.viewer.ViewerScreen
 
-private const val ROUTE_MAIN = "main"
+private const val ROUTE_PHOTOS = "tab/photos"
+private const val ROUTE_ALBUMS = "tab/albums"
+private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_COLLECTION = "collection/{source}"
 private const val ROUTE_VIEWER = "viewer/{source}/{id}"
 private const val ROUTE_SETTINGS = "settings"
@@ -85,61 +113,175 @@ fun HelixApp() {
     }
 }
 
+/** As abas da barra flutuante: cada uma é um destino do NavHost (assim guarda a própria posição). */
+private enum class Tab(val route: String) {
+    Photos(ROUTE_PHOTOS),
+    Albums(ROUTE_ALBUMS),
+    Search(ROUTE_SEARCH),
+}
+
+private val tabRoutes = Tab.entries.map { it.route }.toSet()
+
+/** Troca entre abas (e não abrir/fechar uma tela de dentro). */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean =
+    initialState.destination.route in tabRoutes && targetState.destination.route in tabRoutes
+
+/**
+ * Voltar (e não abrir): a tela de destino está abaixo da atual na pilha, ou a atual já saiu
+ * dela (voltar concluído).
+ */
+internal fun isBackNavigation(stack: List<NavBackStackEntry>, from: NavBackStackEntry, to: NavBackStackEntry): Boolean {
+    val fromIndex = stack.indexOfFirst { it.id == from.id }
+    val toIndex = stack.indexOfFirst { it.id == to.id }
+    return fromIndex == -1 || (toIndex != -1 && toIndex < fromIndex)
+}
+
 @Composable
 private fun HelixNavigation() {
     val navController = rememberNavController()
-    val offsetSpec = helixScreenSpec<IntOffset>()
-    val fadeSpec = helixScreenSpec<Float>()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val route = backStackEntry?.destination?.route.orEmpty()
+    val onTab = route.isEmpty() || route in tabRoutes
+    // Tocar de novo na aba aberta: a lista dela sobe até o topo.
+    val reselect = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
 
-    NavHost(
-        navController = navController,
-        startDestination = ROUTE_MAIN,
-        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-        enterTransition = { slideInHorizontally(offsetSpec) { it / 4 } + fadeIn(fadeSpec) },
-        exitTransition = { fadeOut(fadeSpec) },
-        popEnterTransition = { fadeIn(fadeSpec) },
-        popExitTransition = { slideOutHorizontally(offsetSpec) { it / 4 } + fadeOut(fadeSpec) },
-    ) {
-        composable(ROUTE_MAIN) {
-            MainTabs(
-                onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
-                onOpenViewer = { source, id -> navController.navigateOnce("viewer/${source.key}/$id") },
-                onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
-            )
+    // Modelo do BoomListener: telas de dentro entram deslizando por cima da anterior (que recua um
+    // pouco e esmaece) e saem deslizando de volta; trocar de aba só esmaece. O "voltar" preditivo
+    // usa as mesmas animações, então a tela acompanha o dedo e termina o movimento ao soltar.
+    val slideSpec: FiniteAnimationSpec<IntOffset> = helixScreenSpec()
+    val fadeSpec: FiniteAnimationSpec<Float> = helixEffectsSpec()
+    // A direção (abrir ou voltar) é decidida pela pilha de telas, e não pelo NavHost: no voltar
+    // preditivo ele às vezes usava as animações de "abrir". Assim as quatro sempre concordam.
+    val forwardEnter = slideInHorizontally(slideSpec) { it }
+    val forwardExit = slideOutHorizontally(slideSpec) { -it / 4 } + fadeOut(fadeSpec, targetAlpha = 0.4f)
+    val backEnter = slideInHorizontally(slideSpec) { -it / 4 } + fadeIn(fadeSpec, initialAlpha = 0.4f)
+    val backExit = slideOutHorizontally(slideSpec) { it }
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.goingBack(): Boolean =
+        isBackNavigation(navController.currentBackStack.value, initialState, targetState)
+    val enter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+        when {
+            isTabSwitch() -> fadeIn(fadeSpec)
+            goingBack() -> backEnter
+            else -> forwardEnter
         }
-        composable(
-            route = ROUTE_COLLECTION,
-            arguments = listOf(navArgument("source") { type = NavType.StringType }),
-        ) { entry ->
-            val source = MediaSource.parse(entry.arguments?.getString("source"))
-            CollectionScreen(
-                source = source,
-                title = collectionTitle(source),
-                onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
-                onBack = { navController.popBackStackOnce() },
-            )
+    }
+    val exit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+        when {
+            isTabSwitch() -> fadeOut(fadeSpec)
+            goingBack() -> backExit
+            else -> forwardExit
         }
-        composable(
-            route = ROUTE_VIEWER,
-            arguments = listOf(
-                navArgument("source") { type = NavType.StringType },
-                navArgument("id") { type = NavType.LongType },
-            ),
-        ) { entry ->
-            ViewerScreen(
-                source = MediaSource.parse(entry.arguments?.getString("source")),
-                startId = entry.arguments?.getLong("id") ?: 0L,
-                onBack = { navController.popBackStackOnce() },
-            )
+    }
+
+    // Ir para uma aba. Cada aba guarda o próprio estado (rolagem, busca) ao sair e o devolve ao voltar.
+    fun openTab(tab: Tab) {
+        when (route) {
+            tab.route -> reselect.tryEmit(tab.route)
+            else -> navController.navigate(tab.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
         }
-        composable(ROUTE_SETTINGS) {
-            SettingsScreen(
-                onBack = { navController.popBackStackOnce() },
-                onOpenAbout = { navController.navigateOnce(ROUTE_ABOUT) },
-            )
-        }
-        composable(ROUTE_ABOUT) {
-            AboutScreen(onBack = { navController.popBackStackOnce() })
+    }
+    val selectedTab = Tab.entries.firstOrNull { it.route == route }
+    val navItems = listOf(
+        HelixNavItem(stringResource(R.string.tab_photos), HelixIcons.Photo),
+        HelixNavItem(stringResource(R.string.tab_albums), HelixIcons.Collections),
+        HelixNavItem(stringResource(R.string.tab_search), Icons.Filled.Search),
+    )
+    val barSpec: FiniteAnimationSpec<IntOffset> = helixSpatialSpec()
+
+    CompositionLocalProvider(LocalTabReselect provides reselect) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+            NavHost(
+                navController = navController,
+                startDestination = ROUTE_PHOTOS,
+                enterTransition = enter,
+                exitTransition = exit,
+                popEnterTransition = enter,
+                popExitTransition = exit,
+                // Sem isto o Android usa a animação padrão (a tela encolhe num cartão e some de uma vez).
+                predictivePopEnterTransition = { enter(this) },
+                predictivePopExitTransition = { exit(this) },
+            ) {
+                composable(ROUTE_PHOTOS) {
+                    CollectionScreen(
+                        source = MediaSource.All,
+                        title = stringResource(R.string.tab_photos),
+                        onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
+                        onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
+                        bottomInset = true,
+                        reselectTab = ROUTE_PHOTOS,
+                    )
+                }
+                composable(ROUTE_ALBUMS) {
+                    AlbumsScreen(
+                        onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
+                        onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
+                    )
+                }
+                composable(ROUTE_SEARCH) {
+                    SearchScreen(onOpen = { id -> navController.navigateOnce("viewer/${MediaSource.All.key}/$id") })
+                }
+                composable(
+                    route = ROUTE_COLLECTION,
+                    arguments = listOf(navArgument("source") { type = NavType.StringType }),
+                ) { entry ->
+                    val source = MediaSource.parse(entry.arguments?.getString("source"))
+                    CollectionScreen(
+                        source = source,
+                        title = collectionTitle(source),
+                        onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
+                        onBack = { navController.popBackStackOnce() },
+                    )
+                }
+                composable(
+                    route = ROUTE_VIEWER,
+                    arguments = listOf(
+                        navArgument("source") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.LongType },
+                    ),
+                ) { entry ->
+                    ViewerScreen(
+                        source = MediaSource.parse(entry.arguments?.getString("source")),
+                        startId = entry.arguments?.getLong("id") ?: 0L,
+                        onBack = { navController.popBackStackOnce() },
+                    )
+                }
+                composable(ROUTE_SETTINGS) {
+                    SettingsScreen(
+                        onBack = { navController.popBackStackOnce() },
+                        onOpenAbout = { navController.navigateOnce(ROUTE_ABOUT) },
+                    )
+                }
+                composable(ROUTE_ABOUT) {
+                    AboutScreen(onBack = { navController.popBackStackOnce() })
+                }
+            }
+            // A barra flutuante só aparece nas abas; telas de dentro ficam com a tela toda.
+            AnimatedVisibility(
+                visible = onTab,
+                enter = slideInVertically(barSpec) { it } + fadeIn(fadeSpec),
+                exit = slideOutVertically(barSpec) { it } + fadeOut(fadeSpec),
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
+                HelixFloatingNav(
+                    items = navItems,
+                    selectedIndex = selectedTab?.ordinal ?: 0,
+                    onSelect = { openTab(Tab.entries[it]) },
+                )
+            }
+            // Enquanto uma tela ainda está entrando ou saindo, o "voltar" espera: um segundo voltar
+            // no meio da animação deixava as duas telas sobrepostas e transparentes. Vem depois do
+            // NavHost, então tem prioridade sobre ele (o gesto já começado continua com o NavHost).
+            val entryLifecycle = remember(backStackEntry) {
+                backStackEntry?.lifecycle?.currentStateFlow ?: MutableStateFlow(Lifecycle.State.RESUMED)
+            }
+            val entryState by entryLifecycle.collectAsState()
+            BackHandler(enabled = !entryState.isAtLeast(Lifecycle.State.RESUMED)) {}
+            // Nas abas, voltar de Álbuns/Busca leva à aba Fotos antes de sair do app.
+            BackHandler(enabled = onTab && selectedTab != null && selectedTab != Tab.Photos) { openTab(Tab.Photos) }
         }
     }
 }

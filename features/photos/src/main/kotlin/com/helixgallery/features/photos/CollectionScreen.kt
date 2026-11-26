@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
+import com.helixgallery.core.designsystem.component.ScrollToTopOnReselect
 import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
 import com.helixgallery.core.designsystem.component.GridScrubber
 import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
@@ -79,6 +80,7 @@ fun CollectionScreen(
     onBack: (() -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
     bottomInset: Boolean = false,
+    reselectTab: String? = null,
     viewModel: CollectionViewModel = viewModel(key = "collection_${source.key}"),
 ) {
     val context = LocalContext.current
@@ -90,6 +92,7 @@ fun CollectionScreen(
     val entries = remember(items, prefs.gridLayout) { buildEntries(items, prefs.gridLayout) }
     val selectedItems = remember(items, selectedIds) { items.filter { it.id in selectedIds } }
     val gridState = rememberLazyGridState()
+    if (reselectTab != null) ScrollToTopOnReselect(reselectTab, gridState)
     val inTrash = source == MediaSource.Trash
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -156,6 +159,7 @@ fun CollectionScreen(
                 GridScrubber(
                     state = gridState,
                     entries = entries,
+                    columns = prefs.columns,
                     headerCount = 1,
                     modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = 64.dp),
                 )

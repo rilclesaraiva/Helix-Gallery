@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import com.helixgallery.core.designsystem.component.ScrollToTopOnReselect
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -77,7 +79,10 @@ fun AlbumsScreen(
             titleRow()
             HelixLoading()
         } else {
+            val gridState = rememberLazyGridState()
+            ScrollToTopOnReselect("tab/albums", gridState)
             LazyVerticalGrid(
+                state = gridState,
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 120.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
