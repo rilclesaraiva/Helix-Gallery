@@ -11,6 +11,7 @@ import com.helixgallery.core.model.GridLayout
 import com.helixgallery.core.model.ThemeMode
 import com.helixgallery.core.model.UserPreferences
 import com.helixgallery.data.updates.UpdateCheckResult
+import com.helixgallery.data.updates.UpdatePromptState
 import com.helixgallery.data.updates.UpdatesData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _updateState = MutableStateFlow<UpdatesUiState>(UpdatesUiState.Idle)
     internal val updateState: StateFlow<UpdatesUiState> = _updateState.asStateFlow()
+
+    private val _prompts = MutableStateFlow(updates.promptState())
+    internal val prompts: StateFlow<UpdatePromptState> = _prompts.asStateFlow()
+
+    /** Adia os avisos automáticos de versão nova por [periodMs]. */
+    fun snoozePrompts(periodMs: Long) {
+        updates.snoozePrompt(System.currentTimeMillis() + periodMs)
+        _prompts.value = updates.promptState()
+    }
+
+    /** Volta a avisar sempre (desfaz o adiar e o pular versão). */
+    fun resumePrompts() {
+        updates.resumePrompts()
+        _prompts.value = updates.promptState()
+    }
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { prefs.setThemeMode(mode) }

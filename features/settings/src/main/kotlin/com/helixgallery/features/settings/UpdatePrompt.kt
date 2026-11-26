@@ -4,7 +4,16 @@
 package com.helixgallery.features.settings
 
 import android.app.Application
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.helixgallery.core.designsystem.component.HelixModalSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -85,31 +94,32 @@ fun UpdatePromptHost(viewModel: UpdatePromptViewModel = viewModel()) {
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.checkOnOpen() }
 
     available?.let { update ->
-        AlertDialog(
-            onDismissRequest = viewModel::dismiss,
-            title = { Text(stringResource(R.string.update_available_title, update.latestVersion)) },
-            text = { Text(releaseNotesPreview(update.notes).ifBlank { stringResource(R.string.update_available_body) }) },
-            confirmButton = {
-                TextButton(onClick = {
-                    context.openUrl(update.downloadUrl ?: update.pageUrl)
-                    viewModel.dismiss()
-                }) { Text(stringResource(R.string.update_download)) }
-            },
-            dismissButton = {
-                Row2(
-                    onLater = viewModel::dismiss,
-                    onSkip = viewModel::skip,
+        // Painel de baixo do app (nada de AlertDialog): baixar, adiar ou pular esta versão.
+        HelixModalSheet(onDismiss = viewModel::dismiss) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
+                Text(
+                    text = stringResource(R.string.update_available_title, update.latestVersion),
+                    style = MaterialTheme.typography.titleLarge,
                 )
-            },
-        )
-    }
-}
-
-@Composable
-private fun Row2(onLater: () -> Unit, onSkip: () -> Unit) {
-    androidx.compose.foundation.layout.Row {
-        TextButton(onClick = onSkip) { Text(stringResource(R.string.update_skip)) }
-        TextButton(onClick = onLater) { Text(stringResource(R.string.update_later)) }
+                Text(
+                    text = releaseNotesPreview(update.notes).ifBlank { stringResource(R.string.update_available_body) },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                )
+                Button(
+                    onClick = {
+                        context.openUrl(update.downloadUrl ?: update.pageUrl)
+                        viewModel.dismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.update_download)) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = viewModel::skip) { Text(stringResource(R.string.update_skip)) }
+                    TextButton(onClick = viewModel::dismiss) { Text(stringResource(R.string.update_later)) }
+                }
+            }
+        }
     }
 }
 

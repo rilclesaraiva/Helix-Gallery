@@ -7,6 +7,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Settings reorganized:** a home with categories (Appearance, Gallery, System, About) that open their own pages, with choices as radio buttons instead of pop-up menus. Icons follow the same drawing style as the author's other apps.
+- **Update notice** is now a bottom panel (download, remind later or skip this version), and Settings → System → Updates lets you pause or resume these notices.
+- **About** shows the developer's GitHub photo, the version and build, project links and legal pages.
 - **Tabs remember where you were:** Photos, Albums and Search keep their scroll position when you switch tabs or open a photo and come back. Tapping the open tab again scrolls it to the top.
 - **Screen animations:** screens slide in and out following the direction (open or back), the previous screen steps back and fades, and the back gesture follows your finger with the same animation.
 - **Fast-scroll handle no longer jumps:** its position is now measured in pixels per row, so dragging stays steady even with day/month headers between photo rows.

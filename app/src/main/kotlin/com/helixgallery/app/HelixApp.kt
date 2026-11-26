@@ -75,6 +75,9 @@ import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.features.photos.CollectionScreen
 import com.helixgallery.features.settings.AboutScreen
+import com.helixgallery.features.settings.AppearanceScreen
+import com.helixgallery.features.settings.GallerySettingsScreen
+import com.helixgallery.features.settings.SystemSettingsScreen
 import com.helixgallery.features.settings.SettingsScreen
 import com.helixgallery.features.settings.UpdatePromptHost
 import com.helixgallery.features.viewer.ViewerScreen
@@ -82,6 +85,9 @@ import com.helixgallery.features.viewer.ViewerScreen
 private const val ROUTE_PHOTOS = "tab/photos"
 private const val ROUTE_ALBUMS = "tab/albums"
 private const val ROUTE_SEARCH = "tab/search"
+private const val ROUTE_APPEARANCE = "settings/appearance"
+private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
+private const val ROUTE_SYSTEM = "settings/system"
 private const val ROUTE_COLLECTION = "collection/{source}"
 private const val ROUTE_VIEWER = "viewer/{source}/{id}"
 private const val ROUTE_SETTINGS = "settings"
@@ -252,9 +258,15 @@ private fun HelixNavigation() {
                 composable(ROUTE_SETTINGS) {
                     SettingsScreen(
                         onBack = { navController.popBackStackOnce() },
+                        onOpenAppearance = { navController.navigateOnce(ROUTE_APPEARANCE) },
+                        onOpenGallery = { navController.navigateOnce(ROUTE_GALLERY_SETTINGS) },
+                        onOpenSystem = { navController.navigateOnce(ROUTE_SYSTEM) },
                         onOpenAbout = { navController.navigateOnce(ROUTE_ABOUT) },
                     )
                 }
+                composable(ROUTE_APPEARANCE) { AppearanceScreen(onBack = { navController.popBackStackOnce() }) }
+                composable(ROUTE_GALLERY_SETTINGS) { GallerySettingsScreen(onBack = { navController.popBackStackOnce() }) }
+                composable(ROUTE_SYSTEM) { SystemSettingsScreen(onBack = { navController.popBackStackOnce() }) }
                 composable(ROUTE_ABOUT) {
                     AboutScreen(onBack = { navController.popBackStackOnce() })
                 }
