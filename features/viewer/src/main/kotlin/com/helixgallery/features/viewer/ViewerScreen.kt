@@ -329,9 +329,10 @@ private fun AddToSheet(
     HelixModalSheet(onDismiss = onDismiss) {
         val sheet = this
         var pickingAlbum by remember { mutableStateOf(false) }
+        val fadeSpec = helixEffectsSpec<Float>()
         AnimatedContent(
             targetState = pickingAlbum,
-            transitionSpec = { fadeIn(helixEffectsSpec()) togetherWith fadeOut(helixEffectsSpec()) },
+            transitionSpec = { fadeIn(fadeSpec) togetherWith fadeOut(fadeSpec) },
             label = "addTo",
         ) { picking ->
             Column(Modifier.padding(bottom = 24.dp)) {
