@@ -135,3 +135,9 @@ fun Modifier.recedeWhileSelecting(active: Boolean): Modifier {
             alpha = 1f - f
         }
 }
+
+/**
+ * O :app dá um estado aqui; a rolagem rápida o liga enquanto o dedo está na bolinha, e o :app trava a troca
+ * de aba por gesto nesse tempo (a bolinha só aceita o movimento vertical, a aba só o horizontal).
+ */
+val LocalTabSwipeLock = compositionLocalOf<MutableState<Boolean>?> { null }

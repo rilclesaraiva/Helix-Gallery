@@ -19,7 +19,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +57,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.helixgallery.core.designsystem.component.dragSelect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import com.helixgallery.core.designsystem.theme.helixFastSpatialSpec
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
@@ -550,9 +553,20 @@ private fun OpenPage(
     onToggle: (String) -> Unit,
 ) {
     val selecting = selected.isNotEmpty()
+    val gridState = rememberLazyGridState()
+    val suppressClick = remember { mutableStateOf(false) }
+    val currentEntries by rememberUpdatedState(entries)
+    val currentSelected by rememberUpdatedState(selected)
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(),
+        state = gridState,
+        modifier = Modifier.fillMaxSize().dragSelect(
+            state = gridState,
+            order = { currentEntries.map { it.name } },
+            selected = { currentSelected },
+            onToggle = onToggle,
+            suppressClick = suppressClick,
+        ),
         contentPadding = PaddingValues(bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -591,15 +605,17 @@ private fun OpenPage(
                 entry = entry,
                 selected = entry.name in selected,
                 fileUri = fileUri,
-                onClick = { if (selecting) onToggle(entry.name) else onOpen(entry) },
-                onLongClick = { onToggle(entry.name) },
+                onClick = {
+                    // Soltar o dedo depois de segurar (sem arrastar) não é um toque.
+                    if (suppressClick.value) suppressClick.value = false
+                    else if (selecting) onToggle(entry.name) else onOpen(entry)
+                },
                 selecting = selecting,
             )
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EntryCell(
     entry: VaultEntry,
@@ -607,7 +623,6 @@ private fun EntryCell(
     selecting: Boolean,
     fileUri: suspend (String) -> String,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
 ) {
     // A miniatura vem do arquivo já descriptografado numa pasta temporária (apagada ao trancar).
     val uri by produceState<String?>(null, entry.name) { value = runCatching { fileUri(entry.name) }.getOrNull() }
@@ -620,7 +635,7 @@ private fun EntryCell(
     Box(
         Modifier
             .aspectRatio(1f)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .clickable(onClick = onClick),
     ) {
         Box(
             Modifier

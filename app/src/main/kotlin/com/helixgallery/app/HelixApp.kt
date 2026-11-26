@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.pager.HorizontalPager
 import com.helixgallery.core.designsystem.component.LocalSelectionBarActive
+import com.helixgallery.core.designsystem.component.LocalTabSwipeLock
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -248,9 +249,14 @@ private fun HelixNavigation() {
 
     // Com itens selecionados, a barra de seleção toma o lugar da barra flutuante (como no BoomListener).
     val selectionActive = remember { mutableStateOf(false) }
+    val swipeLock = remember { mutableStateOf(false) }
     val selecting = selectionActive.value
 
-    CompositionLocalProvider(LocalTabReselect provides reselect, LocalSelectionBarActive provides selectionActive) {
+    CompositionLocalProvider(
+        LocalTabReselect provides reselect,
+        LocalSelectionBarActive provides selectionActive,
+        LocalTabSwipeLock provides swipeLock,
+    ) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -270,7 +276,7 @@ private fun HelixNavigation() {
                 composable(ROUTE_TABS) {
                     HorizontalPager(
                         state = pagerState,
-                        userScrollEnabled = !selecting,
+                        userScrollEnabled = !selecting && !swipeLock.value,
                         beyondViewportPageCount = Tab.entries.size - 1,
                         key = { it },
                         modifier = Modifier.fillMaxSize(),

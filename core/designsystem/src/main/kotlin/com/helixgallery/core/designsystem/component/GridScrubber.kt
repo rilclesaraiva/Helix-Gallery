@@ -22,7 +22,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -84,6 +88,9 @@ fun GridScrubber(
     if (entries.size < MIN_ITEMS) return
 
     var dragging by remember { mutableStateOf(false) }
+    // Com o dedo na bolinha a troca de aba por gesto fica travada, para não disputar o movimento.
+    val swipeLock = LocalTabSwipeLock.current
+    DisposableEffect(swipeLock) { onDispose { swipeLock?.value = false } }
     var dragFraction by remember { mutableFloatStateOf(0f) }
     // Só a última posição pedida importa: rola até ela e descarta as que ficaram para trás
     // (senão a grade vai aos trancos atrás do dedo).
@@ -181,7 +188,17 @@ fun GridScrubber(
                     // Só pega o toque quando está à mostra: escondida, a grade rola normal.
                     .then(
                         if (shown) {
-                            Modifier.pointerInput(metrics) {
+                            Modifier.pointerInput(swipeLock) {
+                                // Trava já no toque (antes de a aba pegar o gesto) e solta quando o dedo sobe.
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                    swipeLock?.value = true
+                                    do {
+                                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    } while (event.changes.any { it.pressed })
+                                    swipeLock?.value = false
+                                }
+                            }.pointerInput(metrics) {
                                 try {
                                     detectVerticalDragGestures(
                                         onDragStart = {
