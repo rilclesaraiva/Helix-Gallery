@@ -74,6 +74,7 @@ import com.helixgallery.core.designsystem.component.HelixLogo
 import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.core.model.MediaSource
+import com.helixgallery.features.cleanup.CleanupScreen
 import com.helixgallery.features.vault.VaultScreen
 import com.helixgallery.features.viewer.ExternalViewerScreen
 import com.helixgallery.features.photos.CollectionScreen
@@ -91,6 +92,7 @@ private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_APPEARANCE = "settings/appearance"
 private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
 private const val ROUTE_SYSTEM = "settings/system"
+private const val ROUTE_CLEANUP = "cleanup"
 private const val ROUTE_VAULT = "vault"
 private const val ROUTE_VAULT_VIEW = "vault/view?uri={uri}&video={video}"
 private const val ROUTE_COLLECTION = "collection/{source}"
@@ -237,6 +239,7 @@ private fun HelixNavigation() {
                         onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
                         onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
                         onOpenVault = { navController.navigateOnce(ROUTE_VAULT) },
+                        onOpenCleanup = { navController.navigateOnce(ROUTE_CLEANUP) },
                     )
                 }
                 composable(ROUTE_SEARCH) {
@@ -271,6 +274,7 @@ private fun HelixNavigation() {
                         onBack = { navController.popBackStackOnce() },
                     )
                 }
+                composable(ROUTE_CLEANUP) { CleanupScreen(onBack = { navController.popBackStackOnce() }) }
                 composable(ROUTE_VAULT) {
                     VaultScreen(
                         onBack = { navController.popBackStackOnce() },

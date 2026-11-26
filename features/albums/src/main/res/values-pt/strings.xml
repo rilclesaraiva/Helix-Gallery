@@ -8,4 +8,5 @@
     <string name="albums_trash">Lixeira</string>
     <string name="albums_on_device">No seu aparelho</string>
     <string name="albums_vault">Cofre</string>
+    <string name="albums_cleanup">Limpeza</string>
 </resources>

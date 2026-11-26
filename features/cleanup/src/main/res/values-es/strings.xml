@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cleanup_title">Limpieza</string>
+    <string name="cleanup_screenshots">Capturas de pantalla</string>
+    <string name="cleanup_large_videos">Videos grandes</string>
+    <string name="cleanup_duplicates">Fotos duplicadas</string>
+    <string name="cleanup_scan">Toca para buscar copias idénticas</string>
+    <string name="cleanup_scanning">Buscando… %1$d de %2$d</string>
+    <string name="cleanup_note">Todo lo que elijas va primero a la papelera, así que aún puedes restaurarlo. Los duplicados son copias exactas; se conserva la más antigua de cada una.</string>
+    <string name="cleanup_keep_note">Se conserva la copia más antigua de cada foto.</string>
+    <plurals name="cleanup_summary">
+        <item quantity="one">%1$d elemento · %2$s</item>
+        <item quantity="other">%1$d elementos · %2$s</item>
+    </plurals>
+    <plurals name="cleanup_trash_action">
+        <item quantity="one">Mover %1$d a la papelera · %2$s</item>
+        <item quantity="other">Mover %1$d a la papelera · %2$s</item>
+    </plurals>
+</resources>

@@ -61,6 +61,7 @@ fun AlbumsScreen(
     onOpenCollection: (MediaSource) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenVault: () -> Unit,
+    onOpenCleanup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AlbumsViewModel = viewModel(),
 ) {
@@ -112,6 +113,7 @@ fun AlbumsScreen(
                             onOpenCollection(MediaSource.Trash)
                         }
                         QuickRow(HelixIcons.Lock, stringResource(R.string.albums_vault), null, onOpenVault)
+                        QuickRow(HelixIcons.AutoFix, stringResource(R.string.albums_cleanup), null, onOpenCleanup)
                     }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {

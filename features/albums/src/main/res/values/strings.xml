@@ -8,4 +8,5 @@
     <string name="albums_trash">Trash</string>
     <string name="albums_on_device">On your device</string>
     <string name="albums_vault">Vault</string>
+    <string name="albums_cleanup">Clean up</string>
 </resources>
