@@ -94,4 +94,8 @@
         <item quantity="one">Pronto: %d arquivo salvo</item>
         <item quantity="other">Pronto: %d arquivos salvos</item>
     </plurals>
+    <string name="settings_manage_media">Apagar</string>
+    <string name="settings_manage_media_title">Apagar sem perguntar</string>
+    <string name="settings_manage_media_on">Permitido: mover para a lixeira e apagar acontecem sem o Android perguntar. Toque para alterar.</string>
+    <string name="settings_manage_media_off">Não permitido: o Android pergunta toda vez. Toque para permitir.</string>
 </resources>

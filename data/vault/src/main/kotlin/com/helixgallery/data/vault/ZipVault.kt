@@ -6,7 +6,7 @@ package com.helixgallery.data.vault
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.model.enums.AesKeyStrength
-import net.lingala.zip4j.model.enums.CompressionLevel
+import net.lingala.zip4j.model.enums.CompressionMethod
 import net.lingala.zip4j.model.enums.EncryptionMethod
 import java.io.File
 import java.io.FileNotFoundException
@@ -26,8 +26,8 @@ internal class ZipVault(private val file: File, password: CharArray) {
         setEncryptFiles(true)
         setEncryptionMethod(EncryptionMethod.AES)
         setAesKeyStrength(AesKeyStrength.KEY_STRENGTH_256)
-        // Foto e vídeo já vêm comprimidos: o mínimo de compressão, para ser rápido.
-        setCompressionLevel(CompressionLevel.FASTEST)
+        // Foto e vídeo já vêm comprimidos: sem compressão (STORE), mais rápido e do mesmo tamanho.
+        setCompressionMethod(CompressionMethod.STORE)
         setFileNameInZip(name)
         setLastModifiedFileTime(modifiedMs)
     }

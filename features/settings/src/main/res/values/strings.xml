@@ -94,4 +94,8 @@
         <item quantity="one">Done: %d file saved</item>
         <item quantity="other">Done: %d files saved</item>
     </plurals>
+    <string name="settings_manage_media">Deleting</string>
+    <string name="settings_manage_media_title">Delete without asking</string>
+    <string name="settings_manage_media_on">Allowed: moving to trash and deleting happen without Android asking each time. Tap to change.</string>
+    <string name="settings_manage_media_off">Not allowed: Android asks every time. Tap to allow.</string>
 </resources>

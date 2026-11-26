@@ -20,7 +20,11 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **No bars stuck to the top:** screen titles now scroll away with the content and the buttons float over the page with a translucent background. The back button no longer covers titles in Settings.
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
+### Fixed
+- Vault: opening a photo or video inside the vault no longer locks it (it showed a black screen and asked for the password again). The vault now locks only when you leave the app or the screen.
+
 ### Added
+- Settings → Gallery → Deleting: shortcut to allow "Delete without asking", so moving to trash and deleting no longer show Android's confirmation panel.
 - **Photo editor:** open a photo, tap ⋮ → Edit to rotate, flip, crop (1:1, 4:3, 3:4, 16:9 or the original shape, with zoom), adjust brightness, contrast and color, or apply a filter. It saves a copy next to the original; the original never changes.
 - **Backup:** in Settings → System, save all your photos and videos into one ZIP file in a place you pick (phone folder, SD card or a cloud app's folder), and restore from a ZIP later. Photos already in the gallery are skipped. Nothing is sent by the app.
 - **Clean up:** in the Albums tab, review screenshots, large videos (100 MB or more) and exact duplicate photos, and move the ones you pick to the trash in one go. Duplicates are found by comparing the files' content on your device (the oldest copy of each is kept).

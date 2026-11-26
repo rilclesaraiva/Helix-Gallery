@@ -94,4 +94,8 @@
         <item quantity="one">Listo: %d archivo guardado</item>
         <item quantity="other">Listo: %d archivos guardados</item>
     </plurals>
+    <string name="settings_manage_media">Eliminar</string>
+    <string name="settings_manage_media_title">Eliminar sin preguntar</string>
+    <string name="settings_manage_media_on">Permitido: mover a la papelera y eliminar ocurren sin que Android pregunte. Toca para cambiar.</string>
+    <string name="settings_manage_media_off">No permitido: Android pregunta cada vez. Toca para permitir.</string>
 </resources>

@@ -11,6 +11,7 @@ import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.CancellationSignal
 import android.os.PersistableBundle
+import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -72,8 +73,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.DisposableEffect
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
@@ -118,7 +121,16 @@ fun VaultScreen(
         viewModel.messages.collect { Toast.makeText(context, messageText(context, it), Toast.LENGTH_LONG).show() }
     }
     // Saiu do app: tranca (a senha some da memória e os arquivos extraídos são apagados).
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { if (!viewModel.busy.value) viewModel.lock() }
+    // Atenção: o ciclo de vida da tela (NavBackStackEntry) também "para" ao abrir uma foto do cofre
+    // dentro do app; só o da Activity diz que a pessoa saiu mesmo.
+    val activityLifecycle = remember(context) { context.findComponentActivity()?.lifecycle }
+    DisposableEffect(activityLifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP && !viewModel.busy.value) viewModel.lock()
+        }
+        activityLifecycle?.addObserver(observer)
+        onDispose { activityLifecycle?.removeObserver(observer) }
+    }
 
     val deleteLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
     var pendingStarted by rememberSaveable { mutableStateOf(false) }
@@ -545,4 +557,10 @@ private fun SelectionBar(
             }
         }
     }
+}
+
+private tailrec fun Context.findComponentActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findComponentActivity()
+    else -> null
 }
