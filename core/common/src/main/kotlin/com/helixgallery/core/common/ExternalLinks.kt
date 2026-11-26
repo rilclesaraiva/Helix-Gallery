@@ -18,9 +18,8 @@ fun Context.openUrl(url: String) {
 }
 
 /**
- * Compartilha fotos e vídeos pelo seletor do Android. O tipo vira "image/*",
- * "video/*" ou "* / *" conforme o que foi escolhido; o app que recebe ganha
- * leitura temporária dos arquivos.
+ * Compartilha fotos e vídeos pelo seletor do Android. O tipo vira o de imagem, o de vídeo
+ * ou o genérico, conforme o que foi escolhido; o app que recebe ganha leitura temporária.
  */
 fun Context.shareMedia(uris: List<String>, mimeTypes: List<String>, title: String) {
     if (uris.isEmpty()) return
