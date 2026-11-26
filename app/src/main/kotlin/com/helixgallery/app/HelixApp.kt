@@ -90,6 +90,7 @@ import com.helixgallery.features.editor.EditorScreen
 import com.helixgallery.features.editor.VideoEditorScreen
 import com.helixgallery.features.vault.VaultScreen
 import com.helixgallery.features.viewer.FilePagerViewer
+import com.helixgallery.features.viewer.PagerActions
 import com.helixgallery.features.photos.CollectionScreen
 import com.helixgallery.features.settings.AboutScreen
 import com.helixgallery.features.settings.AppearanceScreen
@@ -376,6 +377,7 @@ private fun HelixNavigation() {
                                 isVideo = args.isVideo,
                                 resolve = args.resolve,
                                 onClose = args.onClose,
+                                actions = PagerActions(args.restoreLabel, args.onRestore, args.deleteLabel, args.onDelete),
                             )
                         },
                         pending = pendingVault,

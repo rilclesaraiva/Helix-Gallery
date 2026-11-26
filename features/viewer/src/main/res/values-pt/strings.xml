@@ -33,4 +33,5 @@
     <string name="viewer_add_to_album">Álbum</string>
     <string name="viewer_locked">Trancada no cofre</string>
     <string name="viewer_lock_failed">Não deu para trancar no cofre</string>
+    <string name="viewer_delete_trash">Excluir</string>
 </resources>

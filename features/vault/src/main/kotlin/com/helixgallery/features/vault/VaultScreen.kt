@@ -57,6 +57,22 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.helixgallery.core.designsystem.theme.helixFastSpatialSpec
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.component.recedeWhileSelecting
+import com.helixgallery.core.designsystem.component.HelixSelectionBar
+import com.helixgallery.core.designsystem.component.HelixConfirmSheet
+import com.helixgallery.core.designsystem.component.HelixBottomActionBar
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -117,6 +133,10 @@ class VaultViewerArgs(
     val isVideo: (Int) -> Boolean,
     val resolve: suspend (Int) -> String?,
     val onClose: () -> Unit,
+    val restoreLabel: String,
+    val deleteLabel: String,
+    val onRestore: (Int) -> Unit,
+    val onDelete: (Int) -> Unit,
 )
 
 @Composable
@@ -166,7 +186,8 @@ fun VaultScreen(
         }
     }
 
-    var confirmDelete by remember { mutableStateOf(false) }
+    // Nomes a apagar do cofre (da seleção ou da foto aberta); não nulo = painel de confirmação aberto.
+    var confirmDelete by remember { mutableStateOf<List<String>?>(null) }
     var viewing by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
@@ -207,6 +228,10 @@ fun VaultScreen(
                         openState.entries.getOrNull(index)?.let { runCatching { viewModel.fileUri(it.name) }.getOrNull() }
                     },
                     onClose = { viewing = null },
+                    restoreLabel = stringResource(R.string.vault_restore_short),
+                    deleteLabel = stringResource(R.string.vault_delete_short),
+                    onRestore = { index -> openState.entries.getOrNull(index)?.let { viewModel.restore(listOf(it.name)) } },
+                    onDelete = { index -> openState.entries.getOrNull(index)?.let { confirmDelete = listOf(it.name) } },
                 ),
             )
         } else {
@@ -214,20 +239,24 @@ fun VaultScreen(
         }
 
         val open = ui as? VaultUi.Open
-        if (viewing != null && open != null) {
-            // Visualizador aberto: ele traz os próprios botões.
-        } else if (open != null && selected.isNotEmpty()) {
-            SelectionBar(
-                count = selected.size,
-                onClose = viewModel::clearSelection,
-                onRestore = viewModel::restoreSelected,
-                onDelete = { confirmDelete = true },
-                modifier = Modifier.align(Alignment.TopCenter),
-            )
-        } else {
-            HelixFloatingBackButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart))
-            if (open != null) {
-                HelixFloatingActions(Modifier.align(Alignment.TopEnd)) {
+        val inList = open != null && viewing == null
+        val selecting = inList && selected.isNotEmpty()
+        BackHandler(enabled = selecting) { viewModel.clearSelection() }
+        // Voltar, trancar e ⋮ flutuam na lista; com itens marcados a barra de seleção toma o lugar deles.
+        AnimatedVisibility(
+            visible = !selecting && viewing == null,
+            modifier = Modifier.align(Alignment.TopStart),
+            enter = fadeIn(helixEffectsSpec()),
+            exit = fadeOut(helixEffectsSpec()),
+        ) { HelixFloatingBackButton(onClick = onBack) }
+        if (open != null) {
+            AnimatedVisibility(
+                visible = !selecting && viewing == null,
+                modifier = Modifier.align(Alignment.TopEnd),
+                enter = fadeIn(helixEffectsSpec()),
+                exit = fadeOut(helixEffectsSpec()),
+            ) {
+                HelixFloatingActions {
                     HelixFloatingCircle {
                         IconButton(onClick = viewModel::lock) {
                             Icon(HelixIcons.Lock, contentDescription = stringResource(R.string.vault_lock))
@@ -255,33 +284,38 @@ fun VaultScreen(
                 }
             }
         }
+        HelixSelectionBar(
+            visible = selecting,
+            count = selected.size,
+            allSelected = open != null && open.entries.isNotEmpty() && selected.size == open.entries.size,
+            onClose = viewModel::clearSelection,
+            onToggleAll = { all -> if (all) viewModel.selectAll(open?.entries?.map { it.name }.orEmpty()) else viewModel.clearSelection() },
+            actions = emptyList(),
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+        AnimatedVisibility(
+            visible = selecting,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+        ) {
+            HelixBottomActionBar(
+                primaryLabel = stringResource(R.string.vault_restore_short),
+                onPrimary = viewModel::restoreSelected,
+                destructiveLabel = stringResource(R.string.vault_delete_short),
+                onDestructive = { confirmDelete = selected.toList() },
+            )
+        }
     }
 
-    if (confirmDelete) {
-        HelixModalSheet(onDismiss = { confirmDelete = false }) {
-            val sheet = this
-            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
-                Text(stringResource(R.string.vault_delete_title), style = MaterialTheme.typography.titleLarge)
-                Text(
-                    stringResource(R.string.vault_delete_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = { sheet.dismiss() }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.vault_cancel))
-                    }
-                    Button(
-                        onClick = {
-                            viewModel.deleteSelected()
-                            sheet.dismiss()
-                        },
-                        modifier = Modifier.weight(1f),
-                    ) { Text(stringResource(R.string.vault_delete)) }
-                }
-            }
-        }
+    confirmDelete?.let { names ->
+        HelixConfirmSheet(
+            title = stringResource(R.string.vault_delete_title),
+            message = stringResource(R.string.vault_delete_body),
+            confirmLabel = stringResource(R.string.vault_delete),
+            onConfirm = { viewModel.delete(names) },
+            onDismiss = { confirmDelete = null },
+        )
     }
 }
 
@@ -524,11 +558,13 @@ private fun OpenPage(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            HelixPageTitle(
-                title = stringResource(R.string.vault_title),
-                hasBack = true,
-                actionsInset = helixActionsInset(2),
-            )
+            Box(Modifier.recedeWhileSelecting(selecting)) {
+                HelixPageTitle(
+                    title = stringResource(R.string.vault_title),
+                    hasBack = true,
+                    actionsInset = helixActionsInset(2),
+                )
+            }
         }
         if (busy) {
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -557,6 +593,7 @@ private fun OpenPage(
                 fileUri = fileUri,
                 onClick = { if (selecting) onToggle(entry.name) else onOpen(entry) },
                 onLongClick = { onToggle(entry.name) },
+                selecting = selecting,
             )
         }
     }
@@ -567,19 +604,36 @@ private fun OpenPage(
 private fun EntryCell(
     entry: VaultEntry,
     selected: Boolean,
+    selecting: Boolean,
     fileUri: suspend (String) -> String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
     // A miniatura vem do arquivo já descriptografado numa pasta temporária (apagada ao trancar).
     val uri by produceState<String?>(null, entry.name) { value = runCatching { fileUri(entry.name) }.getOrNull() }
+    // Mesmo visual de marcação da galeria: a miniatura encolhe e arredonda, e a bolinha de seleção aparece.
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 0.84f else 1f,
+        animationSpec = helixFastSpatialSpec(),
+        label = "entryScale",
+    )
     Box(
         Modifier
             .aspectRatio(1f)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        uri?.let { HelixImage(uri = it, modifier = Modifier.fillMaxSize()) }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(if (selected) RoundedCornerShape(16.dp) else RoundedCornerShape(0.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            uri?.let { HelixImage(uri = it, modifier = Modifier.fillMaxSize()) }
+        }
         if (entry.isVideo) {
             Icon(
                 Icons.Filled.PlayArrow,
@@ -588,55 +642,28 @@ private fun EntryCell(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.55f), MaterialTheme.shapes.small)
+                    .background(Color.Black.copy(alpha = 0.55f), CircleShape)
                     .size(18.dp),
             )
         }
-        if (selected) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)))
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+        if (selecting) {
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(6.dp)
-                    .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small)
-                    .size(20.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SelectionBar(
-    count: Int,
-    onClose: () -> Unit,
-    onRestore: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = FLOATING_BUTTON_ALPHA),
-        shadowElevation = 3.dp,
-        modifier = modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.vault_clear_selection))
-            }
-            Text(
-                pluralStringResource(R.plurals.vault_selected, count, count),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onRestore) {
-                Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.vault_restore))
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.vault_delete))
+                    .padding(8.dp)
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(if (selected) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.35f)),
+            ) {
+                if (selected) {
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
         }
     }

@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import com.helixgallery.core.designsystem.component.recedeWhileSelecting
 import com.helixgallery.core.designsystem.component.HelixSelectionBar
+import com.helixgallery.core.designsystem.component.HelixBottomActionBar
 import com.helixgallery.core.designsystem.component.HelixConfirmSheet
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import androidx.compose.animation.fadeOut
@@ -278,19 +279,12 @@ fun CollectionScreen(
             enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
             exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
         ) {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    TextButton(
-                        onClick = { launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, false)) },
-                        modifier = Modifier.weight(1f),
-                    ) { Text(stringResource(R.string.photos_restore), style = MaterialTheme.typography.titleMedium) }
-                    TextButton(
-                        onClick = { confirm = Confirm.DeleteForever },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) { Text(stringResource(R.string.photos_delete_trash), style = MaterialTheme.typography.titleMedium) }
-                }
-            }
+            HelixBottomActionBar(
+                primaryLabel = stringResource(R.string.photos_restore),
+                onPrimary = { launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, false)) },
+                destructiveLabel = stringResource(R.string.photos_delete_trash),
+                onDestructive = { confirm = Confirm.DeleteForever },
+            )
         }
         HelixSelectionBar(
             visible = selecting,

@@ -49,4 +49,6 @@
     <string name="vault_locked_title">Vault locked</string>
     <string name="vault_show_password">Show password</string>
     <string name="vault_hide_password">Hide password</string>
+    <string name="vault_restore_short">Restore</string>
+    <string name="vault_delete_short">Delete</string>
 </resources>

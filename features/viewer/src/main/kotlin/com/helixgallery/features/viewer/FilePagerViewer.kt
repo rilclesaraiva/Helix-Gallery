@@ -4,6 +4,14 @@
 package com.helixgallery.features.viewer
 
 import androidx.compose.foundation.background
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.component.HelixBottomActionBar
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -21,6 +29,14 @@ import androidx.compose.ui.graphics.Color
 import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
 import com.helixgallery.core.designsystem.component.HelixLoading
 
+/** Os dois botões da barra de baixo do [FilePagerViewer]; cada ação recebe a posição do arquivo à vista. */
+class PagerActions(
+    val primaryLabel: String,
+    val onPrimary: (Int) -> Unit,
+    val destructiveLabel: String,
+    val onDestructive: (Int) -> Unit,
+)
+
 /**
  * Passa de arquivo em arquivo com o gesto, como o visualizador da galeria, para listas cujos arquivos só
  * existem sob demanda (o cofre extrai cada um ao abrir). [resolve] devolve o endereço do arquivo da página
@@ -34,6 +50,8 @@ fun FilePagerViewer(
     resolve: suspend (Int) -> String?,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Ação normal (ex.: Restaurar) e destrutiva (ex.: Excluir) sobre o arquivo à vista; as duas ou nenhuma. */
+    actions: PagerActions? = null,
 ) {
     val pagerState = rememberPagerState(initialPage = startIndex.coerceIn(0, (count - 1).coerceAtLeast(0)), pageCount = { count })
     var controlsVisible by remember { mutableStateOf(true) }
@@ -65,6 +83,26 @@ fun FilePagerViewer(
                 )
             }
         }
-        if (controlsVisible) HelixFloatingBackButton(onClose, Modifier.align(Alignment.TopStart))
+        AnimatedVisibility(
+            visible = controlsVisible,
+            modifier = Modifier.align(Alignment.TopStart),
+            enter = fadeIn(helixEffectsSpec()),
+            exit = fadeOut(helixEffectsSpec()),
+        ) { HelixFloatingBackButton(onClose) }
+        if (actions != null) {
+            AnimatedVisibility(
+                visible = controlsVisible,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
+                exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+            ) {
+                HelixBottomActionBar(
+                    primaryLabel = actions.primaryLabel,
+                    onPrimary = { actions.onPrimary(pagerState.currentPage) },
+                    destructiveLabel = actions.destructiveLabel,
+                    onDestructive = { actions.onDestructive(pagerState.currentPage) },
+                )
+            }
+        }
     }
 }

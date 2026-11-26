@@ -49,4 +49,6 @@
     <string name="vault_locked_title">Bóveda bloqueada</string>
     <string name="vault_show_password">Mostrar contraseña</string>
     <string name="vault_hide_password">Ocultar contraseña</string>
+    <string name="vault_restore_short">Restaurar</string>
+    <string name="vault_delete_short">Eliminar</string>
 </resources>

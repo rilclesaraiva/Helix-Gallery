@@ -164,6 +164,10 @@ internal class VaultViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun selectAll(names: Collection<String>) {
+        _selected.value = names.toSet()
+    }
+
     fun toggle(name: String) {
         _selected.value = _selected.value.let { if (name in it) it - name else it + name }
     }
@@ -172,8 +176,9 @@ internal class VaultViewModel(application: Application) : AndroidViewModel(appli
         _selected.value = emptySet()
     }
 
-    fun restoreSelected() {
-        val names = _selected.value.toList()
+    fun restoreSelected() = restore(_selected.value.toList())
+
+    fun restore(names: List<String>) {
         viewModelScope.launch {
             _busy.value = true
             try {
@@ -189,8 +194,9 @@ internal class VaultViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
-    fun deleteSelected() {
-        val names = _selected.value.toList()
+    fun deleteSelected() = delete(_selected.value.toList())
+
+    fun delete(names: List<String>) {
         viewModelScope.launch {
             _busy.value = true
             try {

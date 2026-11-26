@@ -30,6 +30,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.helixgallery.core.designsystem.component.HelixIcons
+import com.helixgallery.core.designsystem.component.HelixBottomActionBar
 import com.helixgallery.core.designsystem.component.HelixConfirmSheet
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.AlbumSummary
@@ -251,6 +252,15 @@ private fun ViewerContent(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
+            if (inTrash) {
+                // Na lixeira: Restaurar e Excluir em texto, como na seleção da lixeira.
+                HelixBottomActionBar(
+                    primaryLabel = stringResource(R.string.viewer_restore),
+                    onPrimary = ::trashOrRestore,
+                    destructiveLabel = stringResource(R.string.viewer_delete_trash),
+                    onDestructive = { confirm = ViewerConfirm.DeleteForever },
+                )
+            } else
             // Barra inferior no padrão do Google Fotos: sem fundo cinza, só os ícones com rótulo sobre a foto,
             // com um leve escurecimento bem transparente atrás para continuarem legíveis.
             Box(

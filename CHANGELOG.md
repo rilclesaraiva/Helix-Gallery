@@ -7,6 +7,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Vault selection** now works like the gallery's: floating selection bar, round check marks, and Restore / Delete at the bottom of the screen. Restore and Delete also appear inside an opened photo or video in the vault and in the trash.
 - **Lock a photo without leaving it:** Add to → Vault (and "Move to vault" in the selection menu) now locks the photo right away with no password and no jump into the vault; a small message confirms it. The vault password is remembered by the app only for adding things; viewing the vault still needs the password or your fingerprint/PIN. (Until you open the vault once after updating, the old flow is used.)
 - **Trash selection** shows Restore and Delete at the bottom of the screen; they are no longer in the ⋮ menu.
 - **No reloading when you come back:** the gallery list stays in memory and keeps watching for changes while the app is open, so returning from another app no longer reloads everything.
