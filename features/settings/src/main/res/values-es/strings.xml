@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_amoled">AMOLED</string>
+    <string name="settings_dynamic_color">Colores del fondo de pantalla</string>
+    <string name="settings_dynamic_color_desc">Usar los colores de tu fondo de pantalla en lugar de la paleta de la nebulosa</string>
+    <string name="settings_gallery">Galería</string>
+    <string name="settings_layout">Diseño de las fotos</string>
+    <string name="layout_regular">Regular</string>
+    <string name="layout_day">Por día</string>
+    <string name="layout_month">Por mes</string>
+    <string name="settings_columns">Columnas</string>
+    <plurals name="settings_columns_value">
+        <item quantity="one">%d columna</item>
+        <item quantity="other">%d columnas</item>
+    </plurals>
+    <string name="settings_system">Sistema</string>
+    <string name="settings_updates">Actualizaciones</string>
+    <string name="settings_updates_version">Versión %s</string>
+    <string name="settings_updates_check">Buscar actualizaciones</string>
+    <string name="settings_updates_checking">Comprobando…</string>
+    <string name="settings_updates_up_to_date">Tienes la versión más reciente.</string>
+    <string name="settings_updates_available">La versión %s está disponible.</string>
+    <string name="settings_updates_none">Aún no se ha publicado ninguna versión.</string>
+    <string name="settings_updates_failed">No se pudo comprobar. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_about_desc">Versión, código fuente, licencias</string>
+    <string name="update_available_title">Versión %s disponible</string>
+    <string name="update_available_body">Hay una nueva versión de Helix Gallery.</string>
+    <string name="update_download">Descargar</string>
+    <string name="update_later">Ahora no</string>
+    <string name="update_skip">Omitir esta versión</string>
+    <string name="about_title">Acerca de</string>
+    <string name="about_app_name">Helix Gallery</string>
+    <string name="about_version">Versión %s</string>
+    <string name="about_description">Una galería libre y de código abierto para tus fotos y vídeos. Todo se queda en tu dispositivo.</string>
+    <string name="about_project">Proyecto</string>
+    <string name="about_source">Código fuente</string>
+    <string name="about_source_desc">Ver el proyecto en GitHub</string>
+    <string name="about_issues">Informar de un problema</string>
+    <string name="about_issues_desc">Abrir una issue en GitHub</string>
+    <string name="about_contact">Contacto</string>
+    <string name="about_legal">Legal</string>
+    <string name="about_license">Licencia</string>
+    <string name="about_license_desc">GNU General Public License v3.0</string>
+    <string name="about_privacy">Política de privacidad</string>
+    <string name="about_terms">Términos de uso</string>
+    <string name="about_licenses">Licencias de código abierto</string>
+    <string name="about_licenses_desc">Bibliotecas que usa la app</string>
+</resources>

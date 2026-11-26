@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="viewer_back">Atrás</string>
+    <string name="viewer_share">Compartir</string>
+    <string name="viewer_favorite">Añadir a favoritos</string>
+    <string name="viewer_unfavorite">Quitar de favoritos</string>
+    <string name="viewer_details">Detalles</string>
+    <string name="viewer_trash">Mover a la papelera</string>
+    <string name="viewer_restore">Restaurar</string>
+    <string name="viewer_delete_forever">Eliminar definitivamente</string>
+    <string name="details_title">Detalles</string>
+    <string name="details_name">Nombre</string>
+    <string name="details_date">Fecha</string>
+    <string name="details_size">Tamaño</string>
+    <string name="details_resolution">Resolución</string>
+    <string name="details_duration">Duración</string>
+    <string name="details_type">Tipo</string>
+    <string name="details_folder">Carpeta</string>
+    <string name="details_camera">Cámara</string>
+    <string name="details_settings">Ajustes</string>
+</resources>

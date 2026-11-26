@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Helix Gallery</string>
+    <string name="tab_photos">Fotos</string>
+    <string name="tab_albums">Álbuns</string>
+    <string name="tab_search">Busca</string>
+    <string name="collection_favorites">Favoritas</string>
+    <string name="collection_videos">Vídeos</string>
+    <string name="collection_screenshots">Capturas de tela</string>
+    <string name="collection_trash">Lixeira</string>
+    <string name="permission_title">Suas fotos, no seu aparelho</string>
+    <string name="permission_body">O Helix Gallery precisa de acesso a todas as suas fotos e vídeos para mostrá-los. Nada sai do seu aparelho.</string>
+    <string name="permission_allow">Permitir acesso</string>
+    <string name="permission_settings">Abrir ajustes do app</string>
+</resources>

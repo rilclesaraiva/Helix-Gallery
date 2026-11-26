@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ds_back">Atrás</string>
+    <string name="ds_close">Cerrar</string>
+    <string name="ds_video">Vídeo</string>
+    <string name="ds_selected">Seleccionada</string>
+    <string name="ds_favorite">Favorita</string>
+    <string name="ds_scroll_to_date">Ir a la fecha</string>
+</resources>

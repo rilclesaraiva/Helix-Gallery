@@ -1,0 +1,153 @@
+# Modelo de workflow do "Estrutura Universal para Vibe Coding" (seção 7).
+# Copiar para .github/workflows/ci.yml e ajustar só o bloco env (seção 7.3).
+# Ao instalar, conferir a versão mais recente de cada action.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']   # reserva: uma tag criada à mão também publica
+
+permissions:
+  contents: write   # o CI cria a tag, a Release e o comentário de erro no commit
+
+env:
+  # ── Projeto ──
+  APP_NAME: Helix Gallery    # título da Release: "Helix Gallery v1.2.0"
+  APP_SLUG: helixgallery    # nome dos arquivos: minúsculas, sem espaços nem hífens (mesma regra do pacote)
+  # ── Ajuste por stack (ver 7.3) ──
+  VERSION_CMD: grep -m1 -oP '^APP_VERSION=\K\S+' gradle.properties   # imprime a versão
+  TEST_CMD: ./gradlew testDebugUnitTest assembleRelease --no-daemon --stacktrace   # release = R8 + assinatura
+  TEST_ARTIFACTS: app/build/outputs/apk/release/*.apk   # build para vistoria, em todo push
+  RELEASE_CMD: ./gradlew assembleRelease --no-daemon --stacktrace   # só o APK vai ao público (AAB: ver 7.3)
+  ARTIFACTS: |
+    app/build/outputs/apk/release/*.apk
+  # ── Assinatura (apague em stacks que não assinam) ──
+  REQUIRE_SIGNING: 'true'   # sem os secrets, o release é barrado
+  KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # ── Setup da stack (ver 7.3; apague se não precisar) ──
+      # O SDK do Android já vem no runner: não usar android-actions/setup-android.
+      - uses: actions/setup-java@v6
+        with: { distribution: temurin, java-version: '21' }   # roda o Gradle; o app pode compilar para 17
+      - uses: gradle/actions/setup-gradle@v6                  # cache do Gradle entre execuções
+      - name: Assinatura (pulada se não houver secrets)
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+      # A saída vai para build.log: a sessão da IA não consegue ler os logs do
+      # Actions, então, se falhar, o passo seguinte posta o erro no commit.
+      - name: Build + testes
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x gradlew 2>/dev/null || true
+          eval "$TEST_CMD" 2>&1 | tee build.log
+
+      - name: Postar o erro no commit (só se falhar)
+        if: failure()
+        env: { GH_TOKEN: '${{ github.token }}' }
+        shell: bash
+        run: |
+          {
+            echo "### ❌ Build falhou (execução ${{ github.run_id }})"
+            echo; echo "**Erros:**"; echo '```'
+            grep -E "^e: |error:|What went wrong|Could not|FAILED" -A4 build.log | head -n 120 || true
+            echo '```'; echo; echo "**Fim do log:**"; echo '```'
+            tail -n 80 build.log || true
+            echo '```'
+          } > comment.md
+          gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -F body=@comment.md
+
+      - name: Nomear build para vistoria   # helixgallery_v1.2.0-build628.apk
+        id: n
+        run: |
+          N="${APP_SLUG}_v$(eval "$VERSION_CMD")-build${GITHUB_RUN_NUMBER}"; mkdir -p out
+          for f in $TEST_ARTIFACTS; do
+            [ -f "$f" ] || continue; b="$(basename "$f")"
+            case "$b" in *.tar.gz) e=.tar.gz;; *.*) e=".${b##*.}";; *) e=;; esac
+            [ ! -e "out/$N$e" ] || { echo "Dois artefatos com a extensão '$e': ajuste TEST_ARTIFACTS"; exit 1; }
+            cp "$f" "out/$N$e"
+          done
+          echo "name=$N" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.n.outputs.name }}
+          path: out/*
+          if-no-files-found: error   # build verde sem arquivo para vistoria é erro
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    concurrency: release   # duas execuções nunca publicam a mesma versão ao mesmo tempo
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Decidir se publica
+        id: v
+        shell: bash
+        run: |
+          V="$(eval "$VERSION_CMD")"
+          [ -n "$V" ] || { echo "VERSION_CMD não retornou a versão"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            [ "${GITHUB_REF_NAME#v}" = "$V" ] || { echo "Tag $GITHUB_REF_NAME difere da versão $V"; exit 1; }
+          elif git ls-remote --exit-code --tags origin "refs/tags/v$V" >/dev/null; then
+            echo "v$V já publicada: nada a fazer."; echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Comparação literal ("1.2.0" não casa com "1x2y0"); para no próximo "## [".
+          awk -v v="$V" 'index($0, "## [" v "]") == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            [ "$GITHUB_REF_TYPE" = tag ] && { echo "v$V não está no CHANGELOG"; exit 1; }
+            echo "::warning::v$V não tem seção no CHANGELOG: nada publicado."
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"; echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      # ── Setup da stack (igual ao job ci) ──
+      - uses: actions/setup-java@v6
+        if: steps.v.outputs.publish == 'true'
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v6
+        if: steps.v.outputs.publish == 'true'
+
+      - name: Assinatura
+        if: steps.v.outputs.publish == 'true'
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            [ "$REQUIRE_SIGNING" = true ] && { echo "Secrets de assinatura ausentes: release barrado."; exit 1; }
+            exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+      - name: Build e nomes públicos   # helixgallery_v1.2.0.apk
+        if: steps.v.outputs.publish == 'true'
+        run: |
+          chmod +x gradlew 2>/dev/null || true
+          eval "$RELEASE_CMD"
+          N="${APP_SLUG}_v${{ steps.v.outputs.version }}"; mkdir -p out
+          for f in $ARTIFACTS; do
+            [ -f "$f" ] || continue; b="$(basename "$f")"
+            case "$b" in *.tar.gz) e=.tar.gz;; *.*) e=".${b##*.}";; *) e=;; esac
+            [ ! -e "out/$N$e" ] || { echo "Dois artefatos com a extensão '$e': ajuste ARTIFACTS"; exit 1; }
+            cp "$f" "out/$N$e"
+          done
+
+      - uses: softprops/action-gh-release@v3   # cria a tag vX.Y.Z neste commit e publica
+        if: steps.v.outputs.publish == 'true'
+        with:
+          tag_name: v${{ steps.v.outputs.version }}            # a tag não aceita espaço
+          name: ${{ env.APP_NAME }} v${{ steps.v.outputs.version }}   # título público
+          target_commitish: ${{ github.sha }}
+          body_path: notes.md
+          files: out/*

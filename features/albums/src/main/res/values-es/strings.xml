@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="albums_title">Álbumes</string>
+    <string name="albums_settings">Ajustes</string>
+    <string name="albums_favorites">Favoritas</string>
+    <string name="albums_videos">Vídeos</string>
+    <string name="albums_screenshots">Capturas de pantalla</string>
+    <string name="albums_trash">Papelera</string>
+    <string name="albums_on_device">En tu dispositivo</string>
+</resources>

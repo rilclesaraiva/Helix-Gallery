@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Ler fotos e vídeos do aparelho. Android 13+ usa as duas permissões de mídia;
+         no Android 12, READ_EXTERNAL_STORAGE. O app pede acesso total (não o parcial do Android 14). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Apagar e mover para a lixeira sem a caixa de confirmação do sistema (opcional).
+         Só vale se a pessoa liberar o acesso especial "Apps de gerenciamento de mídia". -->
+    <uses-permission
+        android:name="android.permission.MANAGE_MEDIA"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Consultar a última Release no GitHub (aviso de versão nova). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.HelixGallery">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
