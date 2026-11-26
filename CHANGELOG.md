@@ -39,6 +39,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 - Drag to select works again.
+- Vault: swipe sideways inside a photo or video to move to the next one, like in the gallery.
 - Long-pressing a single photo no longer unselects it when you lift your finger.
 - Playing a video now pauses music and other media playing on the phone.
 - Videos: pressing play after the video ended restarts it, and rotating the screen no longer sends the video back to the start.

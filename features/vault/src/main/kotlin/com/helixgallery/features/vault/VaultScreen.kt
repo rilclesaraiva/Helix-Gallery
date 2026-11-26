@@ -13,6 +13,7 @@ import android.os.CancellationSignal
 import android.os.PersistableBundle
 import android.content.ContextWrapper
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -109,10 +110,19 @@ import kotlinx.coroutines.launch
  * O cofre: fotos e vídeos num ZIP com senha (AES-256). [pending] são os itens que a pessoa mandou
  * guardar na galeria; entram assim que o cofre abre, e só saem do aparelho depois de gravados.
  */
+/** O que o visualizador (do app) precisa para passar pelos arquivos do cofre com o gesto. */
+class VaultViewerArgs(
+    val count: Int,
+    val startIndex: Int,
+    val isVideo: (Int) -> Boolean,
+    val resolve: suspend (Int) -> String?,
+    val onClose: () -> Unit,
+)
+
 @Composable
 fun VaultScreen(
     onBack: () -> Unit,
-    onOpenEntry: (uri: String, isVideo: Boolean) -> Unit,
+    viewer: @Composable (VaultViewerArgs) -> Unit,
     pending: List<MediaItem>,
     onPendingHandled: () -> Unit,
     modifier: Modifier = Modifier,
@@ -157,7 +167,7 @@ fun VaultScreen(
     }
 
     var confirmDelete by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    var viewing by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         when (val state = ui) {
@@ -180,16 +190,33 @@ fun VaultScreen(
                 selected = selected,
                 busy = busy,
                 fileUri = viewModel::fileUri,
-                onOpen = { entry ->
-                    scope.launch { runCatching { viewModel.fileUri(entry.name) }.onSuccess { onOpenEntry(it, entry.isVideo) } }
-                },
+                onOpen = { entry -> viewing = state.entries.indexOf(entry).takeIf { it >= 0 } },
                 onToggle = viewModel::toggle,
             )
         }
-        HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        val viewIndex = viewing
+        val openState = ui as? VaultUi.Open
+        if (viewIndex != null && openState != null && openState.entries.isNotEmpty()) {
+            BackHandler { viewing = null }
+            viewer(
+                VaultViewerArgs(
+                    count = openState.entries.size,
+                    startIndex = viewIndex,
+                    isVideo = { openState.entries.getOrNull(it)?.isVideo == true },
+                    resolve = { index ->
+                        openState.entries.getOrNull(index)?.let { runCatching { viewModel.fileUri(it.name) }.getOrNull() }
+                    },
+                    onClose = { viewing = null },
+                ),
+            )
+        } else {
+            HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        }
 
         val open = ui as? VaultUi.Open
-        if (open != null && selected.isNotEmpty()) {
+        if (viewing != null && open != null) {
+            // Visualizador aberto: ele traz os próprios botões.
+        } else if (open != null && selected.isNotEmpty()) {
             SelectionBar(
                 count = selected.size,
                 onClose = viewModel::clearSelection,

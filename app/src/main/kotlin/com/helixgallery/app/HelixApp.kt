@@ -89,7 +89,7 @@ import com.helixgallery.features.cleanup.CleanupScreen
 import com.helixgallery.features.editor.EditorScreen
 import com.helixgallery.features.editor.VideoEditorScreen
 import com.helixgallery.features.vault.VaultScreen
-import com.helixgallery.features.viewer.ExternalViewerScreen
+import com.helixgallery.features.viewer.FilePagerViewer
 import com.helixgallery.features.photos.CollectionScreen
 import com.helixgallery.features.settings.AboutScreen
 import com.helixgallery.features.settings.AppearanceScreen
@@ -108,7 +108,6 @@ private const val ROUTE_SYSTEM = "settings/system"
 private const val ROUTE_EDITOR = "editor?uri={uri}&name={name}&path={path}&taken={taken}&video={video}"
 private const val ROUTE_CLEANUP = "cleanup"
 private const val ROUTE_VAULT = "vault"
-private const val ROUTE_VAULT_VIEW = "vault/view?uri={uri}&video={video}"
 private const val ROUTE_COLLECTION = "collection/{source}"
 private const val ROUTE_VIEWER = "viewer/{source}/{id}"
 private const val ROUTE_SETTINGS = "settings"
@@ -370,24 +369,17 @@ private fun HelixNavigation() {
                 composable(ROUTE_VAULT) {
                     VaultScreen(
                         onBack = { navController.popBackStackOnce() },
-                        onOpenEntry = { uri, isVideo ->
-                            navController.navigateOnce("vault/view?uri=${Uri.encode(uri)}&video=$isVideo")
+                        viewer = { args ->
+                            FilePagerViewer(
+                                count = args.count,
+                                startIndex = args.startIndex,
+                                isVideo = args.isVideo,
+                                resolve = args.resolve,
+                                onClose = args.onClose,
+                            )
                         },
                         pending = pendingVault,
                         onPendingHandled = { pendingVault = emptyList() },
-                    )
-                }
-                composable(
-                    route = ROUTE_VAULT_VIEW,
-                    arguments = listOf(
-                        navArgument("uri") { type = NavType.StringType },
-                        navArgument("video") { type = NavType.BoolType },
-                    ),
-                ) { entry ->
-                    ExternalViewerScreen(
-                        uri = entry.arguments?.getString("uri").orEmpty(),
-                        isVideo = entry.arguments?.getBoolean("video") ?: false,
-                        onClose = { navController.popBackStackOnce() },
                     )
                 }
                 composable(ROUTE_SETTINGS) {
