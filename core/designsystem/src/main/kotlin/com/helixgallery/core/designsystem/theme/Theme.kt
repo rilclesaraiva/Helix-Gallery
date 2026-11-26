@@ -6,13 +6,16 @@ package com.helixgallery.core.designsystem.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import com.helixgallery.core.model.ThemeMode
 
@@ -48,6 +51,9 @@ fun HelixTheme(
         motionScheme = MotionScheme.expressive(),
         shapes = Shapes(),
         typography = Typography(),
-        content = content,
+        content = {
+            // Fora de um Surface o texto e os ícones saem pretos; aqui toda tela já começa legível.
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface, content = content)
+        },
     )
 }

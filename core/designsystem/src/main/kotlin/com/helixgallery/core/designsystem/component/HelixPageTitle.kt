@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -43,6 +44,7 @@ fun HelixPageTitle(
     hasBack: Boolean = false,
     large: Boolean = false,
     statusBarInset: Boolean = true,
+    actionsInset: Dp = 16.dp,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val start = if (hasBack) HelixBackButtonInset else 16.dp
@@ -50,7 +52,7 @@ fun HelixPageTitle(
     Column(insets.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = start, end = 4.dp),
+            modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = start, end = if (large) 4.dp else actionsInset),
         ) {
             if (!large) {
                 Text(
@@ -105,3 +107,18 @@ fun HelixSubPage(
 
 /** Margem padrão das listas para não ficarem sob a barra flutuante de navegação. */
 val FloatingNavPadding: PaddingValues = PaddingValues(bottom = 112.dp)
+
+/** Largura que o título deixa livre à direita para [count] botões de [HelixFloatingActions]. */
+fun helixActionsInset(count: Int): Dp = (8 + 56 * count + 8).dp
+
+/**
+ * Botões do topo (Ajustes, ⋮…) parados no canto de cima, cada um num círculo translúcido igual
+ * ao do voltar: flutuam sobre a página, que rola por baixo.
+ */
+@Composable
+fun HelixFloatingActions(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Row(
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        modifier = modifier.statusBarsPadding().padding(8.dp),
+    ) { content() }
+}

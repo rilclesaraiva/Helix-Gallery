@@ -61,8 +61,10 @@ fun HelixMoreMenu(
     header: String? = null,
 ) {
     var open by remember { mutableStateOf(false) }
-    IconButton(onClick = { open = true }, modifier = modifier) {
-        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.ds_more))
+    HelixFloatingCircle(modifier) {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.ds_more))
+        }
     }
     if (open) HelixMenuSheet(actions = actions, onDismiss = { open = false }, header = header)
 }

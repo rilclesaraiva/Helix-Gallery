@@ -45,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
+import com.helixgallery.core.designsystem.component.HelixFloatingActions
+import com.helixgallery.core.designsystem.component.HelixFloatingCircle
+import com.helixgallery.core.designsystem.component.helixActionsInset
 import com.helixgallery.core.designsystem.component.ScrollToTopOnReselect
 import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
 import com.helixgallery.core.designsystem.component.GridScrubber
@@ -124,14 +127,11 @@ fun CollectionScreen(
         ),
     )
     val titleRow: @Composable () -> Unit = {
-        HelixPageTitle(title = pageTitle, hasBack = onBack != null) {
-            if (onOpenSettings != null) {
-                IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.photos_settings))
-                }
-            }
-            HelixMoreMenu(actions = layoutActions)
-        }
+        HelixPageTitle(
+            title = pageTitle,
+            hasBack = onBack != null,
+            actionsInset = helixActionsInset(if (onOpenSettings != null) 2 else 1),
+        )
     }
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
@@ -166,6 +166,19 @@ fun CollectionScreen(
             }
         }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        // Ajustes e ⋮ flutuam no canto, como o voltar; a barra da seleção toma o lugar deles.
+        if (selectedIds.isEmpty()) {
+            HelixFloatingActions(Modifier.align(Alignment.TopEnd)) {
+                if (onOpenSettings != null) {
+                    HelixFloatingCircle {
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.photos_settings))
+                        }
+                    }
+                }
+                HelixMoreMenu(actions = layoutActions)
+            }
+        }
         if (selectedIds.isNotEmpty()) {
             // A barra da seleção toma o lugar do voltar.
             SelectionBar(

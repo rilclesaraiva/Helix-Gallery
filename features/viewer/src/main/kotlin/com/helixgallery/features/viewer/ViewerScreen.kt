@@ -55,7 +55,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
 import com.helixgallery.core.designsystem.component.FLOATING_BUTTON_ALPHA
 import com.helixgallery.core.designsystem.component.HelixBackButton
-import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import com.helixgallery.core.designsystem.component.HelixLoading
 import com.helixgallery.core.designsystem.component.HelixMenuAction
 import com.helixgallery.core.designsystem.component.HelixMoreMenu
@@ -209,9 +208,7 @@ private fun ViewerContent(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                HelixFloatingCircle {
-                    HelixMoreMenu(actions = menuActions)
-                }
+                HelixMoreMenu(actions = menuActions)
             }
         }
 

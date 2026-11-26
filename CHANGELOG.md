@@ -7,6 +7,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Top buttons float:** Settings and the ⋮ menu now sit in translucent circles over the page, like the back button, instead of scrolling with the title.
+- **Readable text and icons:** text and icons that were drawn in pure black (for example the top buttons) now use the theme colors.
+- **No more waiting on screen changes:** tapping or going back right after opening a screen responds immediately.
 - **Settings reorganized:** a home with categories (Appearance, Gallery, System, About) that open their own pages, with choices as radio buttons instead of pop-up menus. Icons follow the same drawing style as the author's other apps.
 - **Update notice** is now a bottom panel (download, remind later or skip this version), and Settings → System → Updates lets you pause or resume these notices.
 - **About** shows the developer's GitHub photo, the version and build, project links and legal pages.

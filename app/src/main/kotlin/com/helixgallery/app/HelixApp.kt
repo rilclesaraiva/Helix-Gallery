@@ -284,14 +284,6 @@ private fun HelixNavigation() {
                     onSelect = { openTab(Tab.entries[it]) },
                 )
             }
-            // Enquanto uma tela ainda está entrando ou saindo, o "voltar" espera: um segundo voltar
-            // no meio da animação deixava as duas telas sobrepostas e transparentes. Vem depois do
-            // NavHost, então tem prioridade sobre ele (o gesto já começado continua com o NavHost).
-            val entryLifecycle = remember(backStackEntry) {
-                backStackEntry?.lifecycle?.currentStateFlow ?: MutableStateFlow(Lifecycle.State.RESUMED)
-            }
-            val entryState by entryLifecycle.collectAsState()
-            BackHandler(enabled = !entryState.isAtLeast(Lifecycle.State.RESUMED)) {}
             // Nas abas, voltar de Álbuns/Busca leva à aba Fotos antes de sair do app.
             BackHandler(enabled = onTab && selectedTab != null && selectedTab != Tab.Photos) { openTab(Tab.Photos) }
         }

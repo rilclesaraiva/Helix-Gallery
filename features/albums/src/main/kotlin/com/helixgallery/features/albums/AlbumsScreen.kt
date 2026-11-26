@@ -47,7 +47,10 @@ import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.HelixImage
 import com.helixgallery.core.designsystem.component.HelixLoading
 import com.helixgallery.core.designsystem.component.HelixPageTitle
+import com.helixgallery.core.designsystem.component.HelixFloatingActions
+import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import com.helixgallery.core.designsystem.component.HelixStatusBarScrim
+import com.helixgallery.core.designsystem.component.helixActionsInset
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.isScreenshot
@@ -69,11 +72,7 @@ fun AlbumsScreen(
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxSize()) {
         val titleRow: @Composable () -> Unit = {
-            HelixPageTitle(title = stringResource(R.string.albums_title)) {
-                IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.albums_settings))
-                }
-            }
+            HelixPageTitle(title = stringResource(R.string.albums_title), actionsInset = helixActionsInset(1))
         }
         if (!state.loaded) {
             titleRow()
@@ -151,6 +150,13 @@ fun AlbumsScreen(
         }
         }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        HelixFloatingActions(Modifier.align(Alignment.TopEnd)) {
+            HelixFloatingCircle {
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.albums_settings))
+                }
+            }
+        }
     }
 }
 
