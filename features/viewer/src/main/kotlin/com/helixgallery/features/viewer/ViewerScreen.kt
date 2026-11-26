@@ -19,6 +19,13 @@ import androidx.compose.foundation.layout.Row
 import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
+import com.helixgallery.core.designsystem.component.heartbeat
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.helixgallery.core.designsystem.component.HelixIcons
@@ -130,15 +137,32 @@ private fun ViewerContent(
 
     LaunchedEffect(pagerState.currentPage) { zoomed = false }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { _ ->
-        // A lista se atualiza sozinha (MediaStore avisa); nada a fazer aqui.
+    var onCancel by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        // A lista se atualiza sozinha (MediaStore avisa); só desfazemos o que mostramos na frente se a pessoa cancelou.
+        if (result.resultCode != Activity.RESULT_OK) onCancel?.invoke()
+        onCancel = null
     }
-    fun launch(sender: IntentSender) = launcher.launch(IntentSenderRequest.Builder(sender).build())
+    fun launch(sender: IntentSender, onCancel0: (() -> Unit)? = null) {
+        onCancel = onCancel0
+        launcher.launch(IntentSenderRequest.Builder(sender).build())
+    }
 
     fun share() {
         context.shareMedia(listOf(current.uri), listOf(current.mimeType), context.getString(R.string.viewer_share))
     }
-    fun toggleFavorite() = launch(viewModel.repository.favoriteRequest(listOf(current.uri), !current.isFavorite))
+    // Favoritar aparece na hora (como no Boom): o estado local vale até o MediaStore confirmar ou a pessoa cancelar.
+    val favoriteOverride = remember { mutableStateMapOf<Long, Boolean>() }
+    LaunchedEffect(items) { items.forEach { if (favoriteOverride[it.id] == it.isFavorite) favoriteOverride.remove(it.id) } }
+    val currentFavorite = favoriteOverride[current.id] ?: current.isFavorite
+    var beat by remember { mutableIntStateOf(0) }
+    fun toggleFavorite() {
+        val target = !currentFavorite
+        favoriteOverride[current.id] = target
+        if (target) beat++
+        val id = current.id
+        launch(viewModel.repository.favoriteRequest(listOf(current.uri), target)) { favoriteOverride.remove(id) }
+    }
     fun showDetails() {
         viewModel.loadExif(current.uri, current.isVideo)
         details = true
@@ -206,10 +230,11 @@ private fun ViewerContent(
                     HelixFloatingCircle {
                         IconButton(onClick = ::toggleFavorite) {
                             Icon(
-                                if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                 contentDescription = stringResource(
-                                    if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite,
+                                    if (currentFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite,
                                 ),
+                                modifier = Modifier.heartbeat(beat),
                             )
                         }
                     }
@@ -293,7 +318,7 @@ private fun ViewerContent(
 
 private enum class ViewerConfirm { Trash, DeleteForever }
 
-/** Painel "Adicionar a": o cofre e as pastas do aparelho (a foto é copiada; o original fica). */
+/** Painel "Adicionar a": pequeno, com Álbum, uma linha de separação e Cofre. Álbum abre a lista de pastas. */
 @Composable
 private fun AddToSheet(
     albums: List<AlbumSummary>,
@@ -303,23 +328,37 @@ private fun AddToSheet(
 ) {
     HelixModalSheet(onDismiss = onDismiss) {
         val sheet = this
-        Text(
-            text = stringResource(R.string.viewer_add_to),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-        )
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-            if (onVault != null) {
-                AddToRow(HelixIcons.Lock, stringResource(R.string.viewer_add_to_vault)) {
-                    onVault()
-                    sheet.dismiss()
-                }
-            }
-            albums.forEach { album ->
-                AddToRow(HelixIcons.Collections, album.name) {
-                    onAlbum(album)
-                    sheet.dismiss()
+        var pickingAlbum by remember { mutableStateOf(false) }
+        AnimatedContent(
+            targetState = pickingAlbum,
+            transitionSpec = { fadeIn(helixEffectsSpec()) togetherWith fadeOut(helixEffectsSpec()) },
+            label = "addTo",
+        ) { picking ->
+            Column(Modifier.padding(bottom = 24.dp)) {
+                Text(
+                    text = stringResource(R.string.viewer_add_to),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+                if (!picking) {
+                    AddToRow(HelixIcons.Collections, stringResource(R.string.viewer_add_to_album)) { pickingAlbum = true }
+                    if (onVault != null) {
+                        HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
+                        AddToRow(HelixIcons.Lock, stringResource(R.string.viewer_add_to_vault)) {
+                            onVault()
+                            sheet.dismiss()
+                        }
+                    }
+                } else {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                        albums.forEach { album ->
+                            AddToRow(HelixIcons.Collections, album.name) {
+                                onAlbum(album)
+                                sheet.dismiss()
+                            }
+                        }
+                    }
                 }
             }
         }

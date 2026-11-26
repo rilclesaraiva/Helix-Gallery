@@ -7,6 +7,11 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Drag to select** now selects the whole range between where you started and where your finger is, like Google Photos; sliding back unselects.
+- **Favorite heart** updates instantly and beats like BoomListener's.
+- **Add to…** is a small panel: Album, a divider, then Vault.
+- **Albums tools are editable:** tap the dotted "+" tile (Edit tools) to unpin, pin or reorder the shortcuts at the top.
+- **Tabs are a swipeable carousel:** the page follows your finger and settles with the same motion as BoomListener's carousels.
 - **Viewer bottom bar** has no grey background anymore: just the icons over the photo with a faint, transparent darkening behind them, like Google Photos. The ⋮ menu only lists what isn't already on the screen, and "Move to trash" is now just "Trash".
 - **Swipe up on a photo** opens its details; double-tap zoom now glides toward the tapped point instead of jumping.
 - **Add to…** (＋) button in the viewer, between Edit and Trash: add the item to the vault or copy it to another album.
@@ -30,6 +35,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Long-pressing a single photo no longer unselects it when you lift your finger.
 - Playing a video now pauses music and other media playing on the phone.
 - Videos: pressing play after the video ended restarts it, and rotating the screen no longer sends the video back to the start.
 - Photos: layout changes happen only by pinching (the ⋮ button is gone), and the photos now slide into their new places instead of jumping.

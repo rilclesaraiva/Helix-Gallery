@@ -23,11 +23,12 @@
     <string name="viewer_unmute">Ativar som</string>
     <string name="viewer_edit">Editar</string>
     <string name="viewer_add_to">Adicionar a</string>
-    <string name="viewer_add_to_vault">Adicionar ao cofre</string>
+    <string name="viewer_add_to_vault">Cofre</string>
     <string name="viewer_added">Adicionado a %1$s</string>
     <string name="viewer_add_failed">Não deu para adicionar a %1$s</string>
     <string name="viewer_confirm_trash_title">Mover para a lixeira?</string>
     <string name="viewer_confirm_trash_message">Fica na lixeira por 30 dias, e você pode restaurar a qualquer momento antes disso.</string>
     <string name="viewer_confirm_delete_title">Apagar para sempre?</string>
     <string name="viewer_confirm_delete_message">Isso não pode ser desfeito.</string>
+    <string name="viewer_add_to_album">Álbum</string>
 </resources>

@@ -36,6 +36,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.helixgallery.core.designsystem.component.HelixModalSheet
+import com.helixgallery.core.model.AlbumTool
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -75,6 +91,8 @@ fun AlbumsScreen(
     val favorites = remember(state.items) { state.items.count { it.isFavorite } }
     val videos = remember(state.items) { state.items.count { it.isVideo } }
     val screenshots = remember(state.items) { state.items.count { it.isScreenshot() } }
+    val tools by viewModel.tools.collectAsStateWithLifecycle()
+    var editTools by remember { mutableStateOf(false) }
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxSize()) {
@@ -113,20 +131,20 @@ fun AlbumsScreen(
                         }.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        ShortcutTile(Icons.Filled.Favorite, stringResource(R.string.albums_favorites), favorites) {
-                            onOpenCollection(MediaSource.Favorites)
+                        tools.forEach { tool ->
+                            val info = toolInfo(tool, favorites, videos, screenshots, state.trashed.size)
+                            ShortcutTile(info.icon, stringResource(info.title), info.count) {
+                                when (tool) {
+                                    AlbumTool.Favorites -> onOpenCollection(MediaSource.Favorites)
+                                    AlbumTool.Videos -> onOpenCollection(MediaSource.Videos)
+                                    AlbumTool.Screenshots -> onOpenCollection(MediaSource.Screenshots)
+                                    AlbumTool.Trash -> onOpenCollection(MediaSource.Trash)
+                                    AlbumTool.Vault -> onOpenVault()
+                                    AlbumTool.Cleanup -> onOpenCleanup()
+                                }
+                            }
                         }
-                        ShortcutTile(HelixIcons.Videocam, stringResource(R.string.albums_videos), videos) {
-                            onOpenCollection(MediaSource.Videos)
-                        }
-                        ShortcutTile(HelixIcons.Photo, stringResource(R.string.albums_screenshots), screenshots) {
-                            onOpenCollection(MediaSource.Screenshots)
-                        }
-                        ShortcutTile(Icons.Filled.Delete, stringResource(R.string.albums_trash), state.trashed.size) {
-                            onOpenCollection(MediaSource.Trash)
-                        }
-                        ShortcutTile(HelixIcons.Lock, stringResource(R.string.albums_vault), null, onOpenVault)
-                        ShortcutTile(HelixIcons.AutoFix, stringResource(R.string.albums_cleanup), null, onOpenCleanup)
+                        EditToolsTile { editTools = true }
                     }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -170,12 +188,143 @@ fun AlbumsScreen(
             }
         }
         }
+        if (editTools) {
+            EditToolsSheet(
+                tools = tools,
+                onUnpin = viewModel::unpin,
+                onPin = viewModel::pin,
+                onMove = viewModel::move,
+                onDismiss = { editTools = false },
+            )
+        }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
         HelixFloatingActions(Modifier.align(Alignment.TopEnd)) {
             HelixFloatingCircle {
                 IconButton(onClick = onOpenSettings) {
                     Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.albums_settings))
                 }
+            }
+        }
+    }
+}
+
+private class ToolInfo(val icon: ImageVector, val title: Int, val count: Int?)
+
+private fun toolInfo(tool: AlbumTool, favorites: Int, videos: Int, screenshots: Int, trashed: Int) = when (tool) {
+    AlbumTool.Favorites -> ToolInfo(Icons.Filled.Favorite, R.string.albums_favorites, favorites)
+    AlbumTool.Videos -> ToolInfo(HelixIcons.Videocam, R.string.albums_videos, videos)
+    AlbumTool.Screenshots -> ToolInfo(HelixIcons.Photo, R.string.albums_screenshots, screenshots)
+    AlbumTool.Trash -> ToolInfo(Icons.Filled.Delete, R.string.albums_trash, trashed)
+    AlbumTool.Vault -> ToolInfo(HelixIcons.Lock, R.string.albums_vault, null)
+    AlbumTool.Cleanup -> ToolInfo(HelixIcons.AutoFix, R.string.albums_cleanup, null)
+}
+
+/** O último item da linha: círculo pontilhado com "+" e o texto "Editar ferramentas" dentro do pontilhado. */
+@Composable
+private fun EditToolsTile(onClick: () -> Unit) {
+    val line = MaterialTheme.colorScheme.outline
+    val dash = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))
+    val corner = with(LocalDensity.current) { 28.dp.toPx() }
+    Column(
+        Modifier
+            .width(110.dp)
+            .height(IntrinsicSize.Max)
+            .clip(MaterialTheme.shapes.extraLarge)
+            .clickable(onClick = onClick)
+            .drawBehind {
+                drawRoundRect(line, cornerRadius = CornerRadius(corner), style = Stroke(width = 2f, pathEffect = dash))
+            }
+            .padding(vertical = 14.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier.size(52.dp).drawBehind {
+                drawCircle(line, style = Stroke(width = 2f, pathEffect = dash))
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(HelixIcons.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(
+            text = stringResource(R.string.albums_edit_tools),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun EditToolsSheet(
+    tools: List<AlbumTool>,
+    onUnpin: (AlbumTool) -> Unit,
+    onPin: (AlbumTool) -> Unit,
+    onMove: (AlbumTool, Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    HelixModalSheet(onDismiss = onDismiss) {
+        val sheet = this
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            Text(
+                stringResource(R.string.albums_edit_tools_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            Text(
+                stringResource(R.string.albums_pinned),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            tools.forEachIndexed { index, tool ->
+                val info = toolInfo(tool, 0, 0, 0, 0)
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(info.icon, contentDescription = null, modifier = Modifier.padding(start = 8.dp, end = 16.dp))
+                    Text(
+                        stringResource(info.title),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = { onMove(tool, -1) }, enabled = index > 0) {
+                        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(R.string.albums_move_up))
+                    }
+                    IconButton(onClick = { onMove(tool, 1) }, enabled = index < tools.lastIndex) {
+                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.albums_move_down))
+                    }
+                    TextButton(onClick = { onUnpin(tool) }) { Text(stringResource(R.string.albums_unpin)) }
+                }
+            }
+            val hidden = AlbumTool.entries.filter { it !in tools }
+            if (hidden.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.albums_to_pin),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+                hidden.forEach { tool ->
+                    val info = toolInfo(tool, 0, 0, 0, 0)
+                    Row(
+                        Modifier.fillMaxWidth().clickable { onPin(tool) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(info.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            stringResource(info.title),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f).padding(start = 16.dp),
+                        )
+                        Icon(HelixIcons.Add, contentDescription = stringResource(R.string.albums_pin))
+                    }
+                }
+            }
+            TextButton(onClick = { sheet.dismiss() }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Text(stringResource(R.string.albums_done))
             }
         }
     }

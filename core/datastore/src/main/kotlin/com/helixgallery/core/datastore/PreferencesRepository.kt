@@ -11,7 +11,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.helixgallery.core.model.AlbumTool
 import com.helixgallery.core.model.GridLayout
+import com.helixgallery.core.model.encodeAlbumTools
+import com.helixgallery.core.model.parseAlbumTools
 import com.helixgallery.core.model.ThemeMode
 import com.helixgallery.core.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +34,7 @@ class PreferencesRepository internal constructor(private val store: DataStore<Pr
             gridLayout = prefs[LAYOUT]?.let { name -> GridLayout.entries.firstOrNull { it.name == name } }
                 ?: defaults.gridLayout,
             columns = prefs[COLUMNS] ?: defaults.columns,
+            albumTools = parseAlbumTools(prefs[ALBUM_TOOLS]),
         )
     }
 
@@ -50,7 +54,12 @@ class PreferencesRepository internal constructor(private val store: DataStore<Pr
         store.edit { it[COLUMNS] = columns }
     }
 
+    suspend fun setAlbumTools(tools: List<AlbumTool>) {
+        store.edit { it[ALBUM_TOOLS] = encodeAlbumTools(tools) }
+    }
+
     private companion object {
+        val ALBUM_TOOLS = stringPreferencesKey("album_tools")
         val THEME = stringPreferencesKey("theme_mode")
         val DYNAMIC = booleanPreferencesKey("dynamic_color")
         val LAYOUT = stringPreferencesKey("grid_layout")

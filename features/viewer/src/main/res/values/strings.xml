@@ -23,11 +23,12 @@
     <string name="viewer_unmute">Unmute</string>
     <string name="viewer_edit">Edit</string>
     <string name="viewer_add_to">Add to</string>
-    <string name="viewer_add_to_vault">Add to vault</string>
+    <string name="viewer_add_to_vault">Vault</string>
     <string name="viewer_added">Added to %1$s</string>
     <string name="viewer_add_failed">Couldn\'t add to %1$s</string>
     <string name="viewer_confirm_trash_title">Move to the trash?</string>
     <string name="viewer_confirm_trash_message">It stays in the trash for 30 days, and you can restore it any time before that.</string>
     <string name="viewer_confirm_delete_title">Delete permanently?</string>
     <string name="viewer_confirm_delete_message">This can\'t be undone.</string>
+    <string name="viewer_add_to_album">Album</string>
 </resources>

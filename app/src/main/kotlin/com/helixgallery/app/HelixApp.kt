@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.CompositionLocalProvider
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.HorizontalPager
 import com.helixgallery.core.designsystem.component.LocalSelectionBarActive
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -164,7 +168,10 @@ private enum class Tab(val route: String) {
     Search(ROUTE_SEARCH),
 }
 
-private val tabRoutes = Tab.entries.map { it.route }.toSet()
+/** Destino único das abas: um carrossel (HorizontalPager) com Fotos, Álbuns e Busca, que segue o dedo como os do BoomListener. */
+private const val ROUTE_TABS = "tab/main"
+
+private val tabRoutes = setOf(ROUTE_TABS)
 
 /** Troca entre abas (e não abrir/fechar uma tela de dentro). */
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean =
@@ -219,18 +226,18 @@ private fun HelixNavigation() {
         }
     }
 
-    // Ir para uma aba. Cada aba guarda o próprio estado (rolagem, busca) ao sair e o devolve ao voltar.
+    // Ir para uma aba: o carrossel desliza até ela; tocar na aba aberta sobe ao topo.
+    val pagerState = rememberPagerState(pageCount = { Tab.entries.size })
+    val tabScope = rememberCoroutineScope()
+    val tabSpec: FiniteAnimationSpec<Float> = helixSpatialSpec()
     fun openTab(tab: Tab) {
-        when (route) {
-            tab.route -> reselect.tryEmit(tab.route)
-            else -> navController.navigate(tab.route) {
-                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
+        if (tab.ordinal == pagerState.currentPage) {
+            reselect.tryEmit(tab.route)
+        } else {
+            tabScope.launch { pagerState.animateScrollToPage(tab.ordinal, animationSpec = tabSpec) }
         }
     }
-    val selectedTab = Tab.entries.firstOrNull { it.route == route }
+    val selectedTab = if (onTab) Tab.entries[pagerState.currentPage] else null
     val navItems = listOf(
         HelixNavItem(stringResource(R.string.tab_photos), HelixIcons.Photo),
         HelixNavItem(stringResource(R.string.tab_albums), HelixIcons.Collections),
@@ -241,35 +248,16 @@ private fun HelixNavigation() {
     // Com itens selecionados, a barra de seleção toma o lugar da barra flutuante (como no BoomListener).
     val selectionActive = remember { mutableStateOf(false) }
     val selecting = selectionActive.value
-    val swipeThreshold = with(LocalDensity.current) { 72.dp.toPx() }
 
     CompositionLocalProvider(LocalTabReselect provides reselect, LocalSelectionBarActive provides selectionActive) {
         Box(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
-                // Deslizar de lado troca de aba. Só vê o que a grade e os filhos não consumiram.
-                .pointerInput(onTab, selecting, selectedTab) {
-                    if (!onTab || selecting || selectedTab == null) return@pointerInput
-                    var total = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { total = 0f },
-                        onDragEnd = {
-                            val next = when {
-                                total <= -swipeThreshold -> selectedTab.ordinal + 1
-                                total >= swipeThreshold -> selectedTab.ordinal - 1
-                                else -> -1
-                            }
-                            if (next in Tab.entries.indices) openTab(Tab.entries[next])
-                        },
-                        onDragCancel = { total = 0f },
-                        onHorizontalDrag = { _, delta -> total += delta },
-                    )
-                },
         ) {
             NavHost(
                 navController = navController,
-                startDestination = ROUTE_PHOTOS,
+                startDestination = ROUTE_TABS,
                 enterTransition = enter,
                 exitTransition = exit,
                 popEnterTransition = enter,
@@ -278,30 +266,38 @@ private fun HelixNavigation() {
                 predictivePopEnterTransition = { enter(this) },
                 predictivePopExitTransition = { exit(this) },
             ) {
-                composable(ROUTE_PHOTOS) {
-                    CollectionScreen(
-                        source = MediaSource.All,
-                        title = stringResource(R.string.tab_photos),
-                        onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
-                        onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
-                        bottomInset = true,
-                        reselectTab = ROUTE_PHOTOS,
-                        onMoveToVault = { items ->
-                            pendingVault = items
-                            navController.navigateOnce(ROUTE_VAULT)
-                        },
-                    )
-                }
-                composable(ROUTE_ALBUMS) {
-                    AlbumsScreen(
-                        onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
-                        onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
-                        onOpenVault = { navController.navigateOnce(ROUTE_VAULT) },
-                        onOpenCleanup = { navController.navigateOnce(ROUTE_CLEANUP) },
-                    )
-                }
-                composable(ROUTE_SEARCH) {
-                    SearchScreen(onOpen = { id -> navController.navigateOnce("viewer/${MediaSource.All.key}/$id") })
+                composable(ROUTE_TABS) {
+                    HorizontalPager(
+                        state = pagerState,
+                        userScrollEnabled = !selecting,
+                        beyondViewportPageCount = Tab.entries.size - 1,
+                        key = { it },
+                        modifier = Modifier.fillMaxSize(),
+                    ) { page ->
+                        when (Tab.entries[page]) {
+                            Tab.Photos -> CollectionScreen(
+                                source = MediaSource.All,
+                                title = stringResource(R.string.tab_photos),
+                                onOpen = { src, id -> navController.navigateOnce("viewer/${src.key}/$id") },
+                                onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
+                                bottomInset = true,
+                                reselectTab = ROUTE_PHOTOS,
+                                onMoveToVault = { items ->
+                                    pendingVault = items
+                                    navController.navigateOnce(ROUTE_VAULT)
+                                },
+                            )
+                            Tab.Albums -> AlbumsScreen(
+                                onOpenCollection = { source -> navController.navigateOnce("collection/${source.key}") },
+                                onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
+                                onOpenVault = { navController.navigateOnce(ROUTE_VAULT) },
+                                onOpenCleanup = { navController.navigateOnce(ROUTE_CLEANUP) },
+                            )
+                            Tab.Search -> SearchScreen(
+                                onOpen = { id -> navController.navigateOnce("viewer/${MediaSource.All.key}/$id") },
+                            )
+                        }
+                    }
                 }
                 composable(
                     route = ROUTE_COLLECTION,
@@ -408,7 +404,7 @@ private fun HelixNavigation() {
             ) {
                 HelixFloatingNav(
                     items = navItems,
-                    selectedIndex = selectedTab?.ordinal ?: 0,
+                    selectedIndex = pagerState.targetPage,
                     onSelect = { openTab(Tab.entries[it]) },
                 )
             }

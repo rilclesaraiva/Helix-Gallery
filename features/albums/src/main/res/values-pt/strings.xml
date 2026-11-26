@@ -13,4 +13,13 @@
         <item quantity="one">%d item</item>
         <item quantity="other">%d itens</item>
     </plurals>
+    <string name="albums_edit_tools">Editar ferramentas</string>
+    <string name="albums_edit_tools_title">Editar ferramentas</string>
+    <string name="albums_pinned">Fixadas</string>
+    <string name="albums_to_pin">Toque para fixar</string>
+    <string name="albums_unpin">Liberar</string>
+    <string name="albums_pin">Fixar</string>
+    <string name="albums_move_up">Subir</string>
+    <string name="albums_move_down">Descer</string>
+    <string name="albums_done">Concluir</string>
 </resources>

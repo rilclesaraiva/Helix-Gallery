@@ -18,4 +18,6 @@ data class UserPreferences(
     val dynamicColor: Boolean = false,
     val gridLayout: GridLayout = GridLayout.Day,
     val columns: Int = 4,
+    /** Ferramentas fixadas no topo da aba Álbuns, na ordem em que aparecem. */
+    val albumTools: List<AlbumTool> = DEFAULT_ALBUM_TOOLS,
 )

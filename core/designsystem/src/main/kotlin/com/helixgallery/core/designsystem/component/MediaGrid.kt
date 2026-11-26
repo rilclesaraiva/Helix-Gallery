@@ -122,9 +122,13 @@ fun MediaGrid(
         modifier = (if (onZoomStep != null) modifier.pinchToZoom(onZoomStep) else modifier)
             .fillMaxSize()
             .pointerInput(state) {
-                // Segurar numa foto marca; sem soltar, deslizar o dedo por cima das outras marca elas também.
-                val visited = mutableSetOf<Long>()
+                // Segurar numa foto marca; sem soltar, deslizar marca TODO o intervalo (na ordem da grade)
+                // entre a foto onde começou e a que está sob o dedo, como no Google Fotos. Voltar desmarca.
                 val edge = 88.dp.toPx()
+                var order: List<Long> = emptyList()
+                var anchor = -1
+                var base: Set<Long> = emptySet()
+                var applied: Set<Long> = emptySet()
                 fun itemAt(position: Offset): Long? {
                     val info = state.layoutInfo.visibleItemsInfo.firstOrNull { item ->
                         position.x >= item.offset.x && position.x < item.offset.x + item.size.width &&
@@ -133,19 +137,30 @@ fun MediaGrid(
                     val key = info?.key as? String ?: return null
                     return if (key.startsWith("m")) key.substring(1).toLongOrNull() else null
                 }
+                fun applyRange(currentIndex: Int) {
+                    val from = minOf(anchor, currentIndex)
+                    val to = maxOf(anchor, currentIndex)
+                    val wanted = order.subList(from, to + 1).filter { it !in base }.toSet()
+                    (wanted - applied).forEach(currentOnToggle)
+                    (applied - wanted).forEach(currentOnToggle)
+                    applied = wanted
+                }
                 detectDragGesturesAfterLongPress(
                     onDragStart = { position ->
-                        visited.clear()
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        itemAt(position)?.let { id ->
-                            visited.add(id)
-                            currentOnToggle(id)
-                        }
+                        order = currentEntries.mapNotNull { (it as? GridEntry.Media)?.item?.id }
+                        base = currentSelected
+                        applied = emptySet()
+                        anchor = itemAt(position)?.let { order.indexOf(it) } ?: -1
+                        if (anchor >= 0) applyRange(anchor)
                     },
                     onDrag = { change, _ ->
                         change.consume()
-                        itemAt(change.position)?.let { id ->
-                            if (visited.add(id) && id !in currentSelected) currentOnToggle(id)
+                        if (anchor >= 0) {
+                            itemAt(change.position)?.let { id ->
+                                val index = order.indexOf(id)
+                                if (index >= 0) applyRange(index)
+                            }
                         }
                         // Perto da borda de cima ou de baixo, a grade rola sozinha.
                         val height = state.layoutInfo.viewportSize.height
@@ -156,8 +171,8 @@ fun MediaGrid(
                         }
                         if (push != 0f) scope.launch { state.scrollBy(push) }
                     },
-                    onDragEnd = { visited.clear() },
-                    onDragCancel = { visited.clear() },
+                    onDragEnd = { applied = emptySet() },
+                    onDragCancel = { applied = emptySet() },
                 )
             },
         contentPadding = contentPadding,
@@ -203,6 +218,8 @@ fun MediaGrid(
                     item = entry.item,
                     selected = entry.item.id in selectedIds,
                     selecting = selecting,
+                    // O segurar é tratado pela grade; um onLongClick vazio impede que soltar o dedo conte como toque (desmarcava).
+                    onLongClick = {},
                     onClick = {
                         if (selecting) onToggleSelect(entry.item) else onOpen(entry.item)
                     },
