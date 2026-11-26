@@ -91,5 +91,6 @@ Módulos com dependências em uma direção só: `app → features → data → 
 - Já feitos pelo mantenedor desde o início: GitHub Pages ativo (pasta `docs/` da `main`) e repositório público (o aviso de versão depende disso). Não lembrar de novo. Opcional: instalar o app Claude do GitHub para revisão por PR.
 
 ## Contexto atual
+- Etapas 4 (cofre), 5 (editor: `features/editor`, salva cópia JPEG via `data/media/MediaWriter`, aberto pelo ⋮ do visualizador), 6 (limpeza: capturas, vídeos grandes, duplicadas exatas por SHA-256; falta compressão e "parecidas") e 8 (backup ZIP via SAF) escritas e com CI verde. Falta: etapa 7 (Lugares/Documentos), vistoria no aparelho.
 - Já feito após a primeira vistoria: abas com posição salva, animações do Boom, rolagem rápida por pixels, Abrir com, Ajustes por categorias. Aguardando nova vistoria e a escolha do ícone (modelos A–F).
 - Etapas 1 a 3 do roteiro escritas de uma vez (v0.1.0 ainda sem Release). Falta vistoria no aparelho: o primeiro CI decide se compila. Itens conhecidos da primeira entrega: sem "fotos destacadas" nem "agrupar parecidas" ainda; a busca abre o visualizador na lista de todas as fotos; local do EXIF (GPS) não é lido (exigiria `ACCESS_MEDIA_LOCATION`, decisão do mantenedor).
