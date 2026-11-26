@@ -28,6 +28,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
@@ -75,6 +76,7 @@ fun ViewerScreen(
     startId: Long,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: ((MediaItem) -> Unit)? = null,
     viewModel: ViewerViewModel = viewModel(),
 ) {
     val state by viewModel.media.collectAsStateWithLifecycle()
@@ -136,6 +138,9 @@ private fun ViewerContent(
                     onClick = ::toggleFavorite,
                 ),
             )
+        }
+        if (!inTrash && !current.isVideo && onEdit != null) {
+            add(HelixMenuAction(stringResource(R.string.viewer_edit), Icons.Filled.Edit, onClick = { onEdit(current) }))
         }
         add(HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails))
         add(

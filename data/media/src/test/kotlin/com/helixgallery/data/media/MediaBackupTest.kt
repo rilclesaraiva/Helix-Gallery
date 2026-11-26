@@ -47,3 +47,11 @@ class MediaBackupTest {
         assertNull(restoreLocation("Pictures/../../a.jpg", false))
     }
 }
+
+class EditedNameTest {
+    @Test fun editedName_swapsExtension() {
+        assertEquals("IMG_1_edit.jpg", editedFileName("IMG_1.png"))
+        assertEquals("a.b_edit.jpg", editedFileName("a.b.heic"))
+        assertEquals("noext_edit.jpg", editedFileName("noext"))
+    }
+}

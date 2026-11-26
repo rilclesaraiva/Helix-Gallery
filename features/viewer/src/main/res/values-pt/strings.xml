@@ -21,4 +21,5 @@
     <string name="viewer_pause">Pausar</string>
     <string name="viewer_mute">Silenciar</string>
     <string name="viewer_unmute">Ativar som</string>
+    <string name="viewer_edit">Editar</string>
 </resources>

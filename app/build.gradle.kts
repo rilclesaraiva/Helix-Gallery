@@ -80,6 +80,7 @@ dependencies {
     implementation(project(":features:settings"))
     implementation(project(":features:vault"))
     implementation(project(":features:cleanup"))
+    implementation(project(":features:editor"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)

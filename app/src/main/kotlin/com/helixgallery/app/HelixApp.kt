@@ -75,6 +75,7 @@ import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.features.cleanup.CleanupScreen
+import com.helixgallery.features.editor.EditorScreen
 import com.helixgallery.features.vault.VaultScreen
 import com.helixgallery.features.viewer.ExternalViewerScreen
 import com.helixgallery.features.photos.CollectionScreen
@@ -92,6 +93,7 @@ private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_APPEARANCE = "settings/appearance"
 private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
 private const val ROUTE_SYSTEM = "settings/system"
+private const val ROUTE_EDITOR = "editor?uri={uri}&name={name}&path={path}&taken={taken}"
 private const val ROUTE_CLEANUP = "cleanup"
 private const val ROUTE_VAULT = "vault"
 private const val ROUTE_VAULT_VIEW = "vault/view?uri={uri}&video={video}"
@@ -272,6 +274,29 @@ private fun HelixNavigation() {
                         source = MediaSource.parse(entry.arguments?.getString("source")),
                         startId = entry.arguments?.getLong("id") ?: 0L,
                         onBack = { navController.popBackStackOnce() },
+                        onEdit = { item ->
+                            navController.navigateOnce(
+                                "editor?uri=${Uri.encode(item.uri)}&name=${Uri.encode(item.displayName)}" +
+                                    "&path=${Uri.encode(item.relativePath)}&taken=${item.takenMs}",
+                            )
+                        },
+                    )
+                }
+                composable(
+                    route = ROUTE_EDITOR,
+                    arguments = listOf(
+                        navArgument("uri") { type = NavType.StringType },
+                        navArgument("name") { type = NavType.StringType },
+                        navArgument("path") { type = NavType.StringType },
+                        navArgument("taken") { type = NavType.LongType },
+                    ),
+                ) { entry ->
+                    EditorScreen(
+                        uri = entry.arguments?.getString("uri").orEmpty(),
+                        displayName = entry.arguments?.getString("name").orEmpty(),
+                        relativePath = entry.arguments?.getString("path").orEmpty(),
+                        takenMs = entry.arguments?.getLong("taken") ?: 0L,
+                        onClose = { navController.popBackStackOnce() },
                     )
                 }
                 composable(ROUTE_CLEANUP) { CleanupScreen(onBack = { navController.popBackStackOnce() }) }
