@@ -34,7 +34,6 @@ internal class CleanupViewModel(application: Application) : AndroidViewModel(app
     val repository: MediaRepository = MediaData.repository(application)
 
     val media: StateFlow<MediaState> = repository.state
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
 
     private val _scan = MutableStateFlow<DuplicateScan>(DuplicateScan.Idle)
     val scan: StateFlow<DuplicateScan> = _scan.asStateFlow()

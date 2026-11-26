@@ -31,4 +31,6 @@
     <string name="viewer_confirm_delete_title">Delete permanently?</string>
     <string name="viewer_confirm_delete_message">This can\'t be undone.</string>
     <string name="viewer_add_to_album">Album</string>
+    <string name="viewer_locked">Locked in the vault</string>
+    <string name="viewer_lock_failed">Couldn\'t lock it in the vault</string>
 </resources>

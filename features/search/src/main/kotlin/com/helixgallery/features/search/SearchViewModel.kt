@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.stateIn
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
     val media: StateFlow<MediaState> = MediaData.repository(application).state
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()

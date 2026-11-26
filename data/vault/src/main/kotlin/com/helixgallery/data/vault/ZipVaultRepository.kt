@@ -17,6 +17,7 @@ import java.io.File
 internal class ZipVaultRepository(private val context: Context) : VaultRepository {
     private val storage = VaultStorage(context)
     private val quick = QuickUnlockStore(context)
+    private val autoAdd = AutoAddStore(context)
     private val mutex = Mutex()
 
     private val workDir = File(context.cacheDir, "vault")
@@ -33,6 +34,8 @@ internal class ZipVaultRepository(private val context: Context) : VaultRepositor
     private fun open(pass: CharArray) {
         password = pass.copyOf()
         vault = ZipVault(workFile, pass)
+        // Lembra a senha (só para guardar coisas) para trancar uma foto sem pedir de novo.
+        autoAdd.save(pass)
     }
 
     override suspend fun create(password: CharArray) {
@@ -60,6 +63,26 @@ internal class ZipVaultRepository(private val context: Context) : VaultRepositor
                 wipeWork()
                 false
             }
+        }
+    }
+
+    override suspend fun addQuietly(sources: List<VaultSource>): VaultAddResult? {
+        if (isUnlocked()) return add(sources)
+        if (!exists()) return null
+        val saved = autoAdd.load() ?: return null
+        val opened = try {
+            unlock(saved)
+        } catch (_: Exception) {
+            false
+        } finally {
+            saved.fill('\u0000')
+        }
+        if (!opened) return null
+        return try {
+            add(sources)
+        } finally {
+            // Volta a trancar: quem ver a tela não vê o cofre.
+            lock()
         }
     }
 

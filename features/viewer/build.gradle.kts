@@ -11,6 +11,7 @@ android {
 
 dependencies {
     implementation(project(":data:media"))
+    implementation(project(":data:vault"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.media3.exoplayer)

@@ -36,4 +36,10 @@
         <item quantity="one">%d item will be deleted permanently. This can\'t be undone.</item>
         <item quantity="other">%d items will be deleted permanently. This can\'t be undone.</item>
     </plurals>
+    <plurals name="photos_locked">
+        <item quantity="one">%d item locked in the vault</item>
+        <item quantity="other">%d items locked in the vault</item>
+    </plurals>
+    <string name="photos_lock_failed">Couldn\'t lock it in the vault</string>
+    <string name="photos_delete_trash">Delete</string>
 </resources>

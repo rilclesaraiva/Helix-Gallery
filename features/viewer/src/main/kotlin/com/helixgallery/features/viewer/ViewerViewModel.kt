@@ -13,6 +13,8 @@ import com.helixgallery.data.media.MediaData
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.data.media.MediaRepository
 import com.helixgallery.data.media.MediaWriterData
+import com.helixgallery.data.vault.VaultData
+import com.helixgallery.data.vault.VaultSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,9 +38,25 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
     val repository: MediaRepository = MediaData.repository(application)
 
     val media: StateFlow<MediaState> = repository.state
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
 
     private val writer = MediaWriterData.writer(application)
+    private val vault = VaultData.repository(application)
+
+    /**
+     * Tranca [item] no cofre sem pedir a senha. [onResult]: true = guardou (agora o original pode sair),
+     * false = não deu, null = ainda não dá sem abrir o cofre (quem chama segue o caminho normal).
+     */
+    fun lockToVault(item: MediaItem, onResult: (Boolean?) -> Unit) {
+        viewModelScope.launch {
+            val result = try {
+                vault.addQuietly(listOf(VaultSource(item.uri, item.displayName, item.relativePath, item.takenMs)))
+            } catch (_: Exception) {
+                onResult(false)
+                return@launch
+            }
+            onResult(result?.let { item.uri in it.stored })
+        }
+    }
 
     /** Copia [item] para a pasta [relativePath] (o original fica). [onDone] recebe se deu certo. */
     fun copyTo(item: MediaItem, relativePath: String, onDone: (Boolean) -> Unit) {

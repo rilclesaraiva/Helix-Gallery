@@ -25,6 +25,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
@@ -55,12 +56,14 @@ internal class MediaStoreRepository(private val context: Context) : MediaReposit
         awaitClose { resolver.unregisterContentObserver(observer) }
     }
 
-    override val state: Flow<MediaState> = changes()
+    override val state: StateFlow<MediaState> = changes()
         .debounce(400)
         .onStart { emit(Unit) }
         .mapLatest { load() }
         .flowOn(Dispatchers.IO)
-        .stateIn(scope, SharingStarted.WhileSubscribed(5_000), MediaState())
+        // Lazily: depois do primeiro uso a lista fica viva (e o monitoramento ligado) até o app fechar;
+        // ao voltar de outro app a lista já está pronta, sem recarregar nem piscar.
+        .stateIn(scope, SharingStarted.Lazily, MediaState())
 
     private fun load(): MediaState {
         val active = query(trashed = false).sortedByDescending { it.takenMs }

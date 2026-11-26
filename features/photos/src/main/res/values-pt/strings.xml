@@ -36,4 +36,10 @@
         <item quantity="one">%d item será apagado para sempre. Isso não pode ser desfeito.</item>
         <item quantity="other">%d itens serão apagados para sempre. Isso não pode ser desfeito.</item>
     </plurals>
+    <plurals name="photos_locked">
+        <item quantity="one">%d item trancado no cofre</item>
+        <item quantity="other">%d itens trancados no cofre</item>
+    </plurals>
+    <string name="photos_lock_failed">Não deu para trancar no cofre</string>
+    <string name="photos_delete_trash">Excluir</string>
 </resources>

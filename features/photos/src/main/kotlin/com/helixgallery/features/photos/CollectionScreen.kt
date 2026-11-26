@@ -5,6 +5,7 @@ package com.helixgallery.features.photos
 
 import android.app.Activity
 import android.content.IntentSender
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -33,6 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import com.helixgallery.core.designsystem.component.recedeWhileSelecting
@@ -160,8 +167,27 @@ fun CollectionScreen(
                         stringResource(R.string.photos_move_to_vault),
                         HelixIcons.Lock,
                         onClick = {
-                            onMoveToVault(selectedItems)
-                            viewModel.clearSelection()
+                            val chosen = selectedItems
+                            viewModel.lockToVault(chosen) { stored, failed ->
+                                when {
+                                    stored == null -> {
+                                        // Cofre ainda sem senha guardada: segue o caminho normal (abre o cofre).
+                                        onMoveToVault(chosen)
+                                        viewModel.clearSelection()
+                                    }
+                                    stored.isEmpty() -> Toast.makeText(context, R.string.photos_lock_failed, Toast.LENGTH_SHORT).show()
+                                    else -> {
+                                        Toast.makeText(
+                                            context,
+                                            context.resources.getQuantityString(R.plurals.photos_locked, stored.size, stored.size),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        if (failed > 0) Toast.makeText(context, R.string.photos_lock_failed, Toast.LENGTH_SHORT).show()
+                                        viewModel.clearSelection()
+                                        launch(viewModel.repository.deleteRequest(stored))
+                                    }
+                                }
+                            }
                         },
                     ),
                 )
@@ -174,23 +200,8 @@ fun CollectionScreen(
                     onClick = { confirm = Confirm.Trash },
                 ),
             )
-        } else {
-            add(
-                HelixMenuAction(
-                    stringResource(R.string.photos_restore),
-                    Icons.Filled.Refresh,
-                    onClick = { launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, false)) },
-                ),
-            )
-            add(
-                HelixMenuAction(
-                    stringResource(R.string.photos_delete_forever),
-                    Icons.Filled.Delete,
-                    destructive = true,
-                    onClick = { confirm = Confirm.DeleteForever },
-                ),
-            )
         }
+        // Na lixeira, Restaurar e Excluir ficam na barra de baixo (abaixo), não no ⋮.
     }
     val trashMenu = listOf(
         HelixMenuAction(
@@ -259,6 +270,26 @@ fun CollectionScreen(
                 exit = fadeOut(helixEffectsSpec()),
             ) {
                 HelixFloatingBackButton(onClick = onBack)
+            }
+        }
+        AnimatedVisibility(
+            visible = selecting && inTrash,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    TextButton(
+                        onClick = { launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, false)) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text(stringResource(R.string.photos_restore), style = MaterialTheme.typography.titleMedium) }
+                    TextButton(
+                        onClick = { confirm = Confirm.DeleteForever },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) { Text(stringResource(R.string.photos_delete_trash), style = MaterialTheme.typography.titleMedium) }
+                }
             }
         }
         HelixSelectionBar(

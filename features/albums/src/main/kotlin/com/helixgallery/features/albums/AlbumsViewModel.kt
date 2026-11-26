@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 
 class AlbumsViewModel(application: Application) : AndroidViewModel(application) {
     val media: StateFlow<MediaState> = MediaData.repository(application).state
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
 
     private val prefs = HelixPreferences.repository(application)
 

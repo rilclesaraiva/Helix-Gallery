@@ -31,4 +31,6 @@
     <string name="viewer_confirm_delete_title">¿Eliminar para siempre?</string>
     <string name="viewer_confirm_delete_message">Esto no se puede deshacer.</string>
     <string name="viewer_add_to_album">Álbum</string>
+    <string name="viewer_locked">Guardada en la caja fuerte</string>
+    <string name="viewer_lock_failed">No se pudo guardar en la caja fuerte</string>
 </resources>

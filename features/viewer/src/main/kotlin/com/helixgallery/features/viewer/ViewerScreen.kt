@@ -288,7 +288,20 @@ private fun ViewerContent(
         val albums = remember(all) { buildAlbums(all.items) }
         AddToSheet(
             albums = albums.filter { it.bucketId != current.bucketId },
-            onVault = onMoveToVault?.let { move -> { move(current) } },
+            onVault = {
+                val item = current
+                viewModel.lockToVault(item) { result ->
+                    when (result) {
+                        true -> {
+                            Toast.makeText(context, R.string.viewer_locked, Toast.LENGTH_SHORT).show()
+                            // Já está no cofre: a cópia solta na galeria sai.
+                            launch(viewModel.repository.deleteRequest(listOf(item.uri)))
+                        }
+                        false -> Toast.makeText(context, R.string.viewer_lock_failed, Toast.LENGTH_SHORT).show()
+                        null -> onMoveToVault?.invoke(item)
+                    }
+                }
+            },
             onAlbum = { album ->
                 viewModel.copyTo(current, album.cover.relativePath) { ok ->
                     Toast.makeText(

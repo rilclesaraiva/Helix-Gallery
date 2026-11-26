@@ -31,4 +31,6 @@
     <string name="viewer_confirm_delete_title">Apagar para sempre?</string>
     <string name="viewer_confirm_delete_message">Isso não pode ser desfeito.</string>
     <string name="viewer_add_to_album">Álbum</string>
+    <string name="viewer_locked">Trancada no cofre</string>
+    <string name="viewer_lock_failed">Não deu para trancar no cofre</string>
 </resources>

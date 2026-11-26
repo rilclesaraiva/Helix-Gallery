@@ -36,4 +36,10 @@
         <item quantity="one">Se eliminará %d elemento para siempre. Esto no se puede deshacer.</item>
         <item quantity="other">Se eliminarán %d elementos para siempre. Esto no se puede deshacer.</item>
     </plurals>
+    <plurals name="photos_locked">
+        <item quantity="one">%d elemento guardado en la caja fuerte</item>
+        <item quantity="other">%d elementos guardados en la caja fuerte</item>
+    </plurals>
+    <string name="photos_lock_failed">No se pudo guardar en la caja fuerte</string>
+    <string name="photos_delete_trash">Eliminar</string>
 </resources>

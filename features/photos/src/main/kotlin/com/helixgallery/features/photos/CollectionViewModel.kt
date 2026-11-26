@@ -14,6 +14,8 @@ import com.helixgallery.core.model.UserPreferences
 import com.helixgallery.core.model.nextGridZoom
 import com.helixgallery.data.media.MediaData
 import com.helixgallery.data.media.MediaRepository
+import com.helixgallery.data.vault.VaultData
+import com.helixgallery.data.vault.VaultSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,9 +28,25 @@ class CollectionViewModel(application: Application) : AndroidViewModel(applicati
 
     val repository: MediaRepository = MediaData.repository(application)
     private val prefs = HelixPreferences.repository(application)
+    private val vault = VaultData.repository(application)
+
+    /**
+     * Tranca [items] no cofre sem pedir a senha. [onResult] recebe os endereços que entraram (os que podem sair
+     * da galeria), ou null se ainda não dá sem abrir o cofre.
+     */
+    fun lockToVault(items: List<com.helixgallery.core.model.MediaItem>, onResult: (stored: List<String>?, failed: Int) -> Unit) {
+        viewModelScope.launch {
+            val result = try {
+                vault.addQuietly(items.map { VaultSource(it.uri, it.displayName, it.relativePath, it.takenMs) })
+            } catch (_: Exception) {
+                onResult(emptyList(), items.size)
+                return@launch
+            }
+            onResult(result?.stored, result?.failed ?: 0)
+        }
+    }
 
     val media: StateFlow<MediaState> = repository.state
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
 
     val preferences: StateFlow<UserPreferences> = prefs.preferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserPreferences())

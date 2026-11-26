@@ -102,7 +102,7 @@ fun HelixSelectionBar(
                             tint = if (allSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    HelixMoreMenu(actions = actions, circle = false)
+                    if (actions.isNotEmpty()) HelixMoreMenu(actions = actions, circle = false)
                 }
             }
         }

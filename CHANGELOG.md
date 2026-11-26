@@ -7,6 +7,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Lock a photo without leaving it:** Add to → Vault (and "Move to vault" in the selection menu) now locks the photo right away with no password and no jump into the vault; a small message confirms it. The vault password is remembered by the app only for adding things; viewing the vault still needs the password or your fingerprint/PIN. (Until you open the vault once after updating, the old flow is used.)
+- **Trash selection** shows Restore and Delete at the bottom of the screen; they are no longer in the ⋮ menu.
+- **No reloading when you come back:** the gallery list stays in memory and keeps watching for changes while the app is open, so returning from another app no longer reloads everything.
 - **Edit videos:** the Edit button now also works on videos — trim the clip, rotate, mute — and saves a copy.
 - **New photos show up right away:** the gallery now watches images and videos live, so a new picture from another app appears without restarting.
 - **Background music comes back:** playing a video pauses other media, and when the video pauses, ends or you leave it, the other player resumes.
@@ -38,6 +41,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Videos stop as soon as you leave them (they kept playing for a few seconds during the closing animation).
 - Drag to select works again.
 - Vault: swipe sideways inside a photo or video to move to the next one, like in the gallery.
 - Long-pressing a single photo no longer unselects it when you lift your finger.

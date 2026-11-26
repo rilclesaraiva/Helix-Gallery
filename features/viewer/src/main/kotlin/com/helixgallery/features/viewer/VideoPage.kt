@@ -30,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -118,6 +120,10 @@ fun VideoPage(
             player.release()
         }
     }
+    // Saiu da tela (ou do app): para na hora. A animação de saída do Navigation dura um tempo, e o vídeo
+    // continuaria tocando durante ela; o estado da tela (ON_PAUSE) já avisa no começo da saída.
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { player.pause() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { if (isCurrent && wantsPlay) player.play() }
     LaunchedEffect(isCurrent) {
         if (isCurrent && wantsPlay) player.play() else player.pause()
     }

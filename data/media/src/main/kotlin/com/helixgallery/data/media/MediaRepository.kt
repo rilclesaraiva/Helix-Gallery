@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.IntentSender
 import com.helixgallery.core.model.MediaState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Fonte das fotos e vídeos do aparelho (a MediaStore do Android). Favoritos e lixeira
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface MediaRepository {
     /** A lista atual; se atualiza sozinha quando algo muda no aparelho. */
-    val state: Flow<MediaState>
+    val state: StateFlow<MediaState>
 
     /** Pede ao Android para mover para a lixeira (ou restaurar); a pessoa confirma numa janela do sistema. */
     fun trashRequest(uris: List<String>, trash: Boolean): IntentSender

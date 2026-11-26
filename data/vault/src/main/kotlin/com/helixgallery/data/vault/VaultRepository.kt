@@ -33,6 +33,13 @@ interface VaultRepository {
     /** Guarda os arquivos e grava o cofre. Nada sai do aparelho: só entra no ZIP. */
     suspend fun add(sources: List<VaultSource>): VaultAddResult
 
+    /**
+     * Guarda [sources] sem pedir a senha e sem abrir o cofre para a pessoa: usa a senha que o app guardou
+     * quando o cofre foi criado/aberto. Devolve null se isso não é possível (cofre inexistente ou senha ainda
+     * não guardada): aí vale o caminho normal, abrindo o cofre.
+     */
+    suspend fun addQuietly(sources: List<VaultSource>): VaultAddResult?
+
     /** O arquivo já descriptografado de [name], numa pasta temporária (para mostrar). */
     suspend fun extractForViewing(name: String): File
 
