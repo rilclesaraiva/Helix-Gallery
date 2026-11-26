@@ -45,4 +45,8 @@
         <item quantity="one">%d item restored to the gallery</item>
         <item quantity="other">%d items restored to the gallery</item>
     </plurals>
+    <string name="vault_create_title">Create your vault</string>
+    <string name="vault_locked_title">Vault locked</string>
+    <string name="vault_show_password">Show password</string>
+    <string name="vault_hide_password">Hide password</string>
 </resources>

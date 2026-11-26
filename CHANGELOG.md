@@ -7,6 +7,15 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- **Viewer bottom bar** has no grey background anymore: just the icons over the photo with a faint, transparent darkening behind them, like Google Photos. The ⋮ menu only lists what isn't already on the screen, and "Move to trash" is now just "Trash".
+- **Swipe up on a photo** opens its details; double-tap zoom now glides toward the tapped point instead of jumping.
+- **Add to…** (＋) button in the viewer, between Edit and Trash: add the item to the vault or copy it to another album.
+- **Selection bar** works like BoomListener's: a floating bar with close, count, select all and a ⋮ menu with the actions, and it replaces the bottom navigation while you select (both animate in and out).
+- **Confirmation panel** before moving to the trash or deleting, instead of the system's dialog.
+- **Vault lock screen** redesigned (round password field with a show/hide eye button).
+- **Switch tabs by swiping** sideways on Photos, Albums and Search.
+- **Drag to select:** long-press a photo and, without lifting your finger, slide over others to select them too.
+- **Smooth transitions everywhere:** any sudden change on screen now animates.
 - **New app icon:** the Helix Nebula with its full glow and texture.
 - **Top buttons float:** Settings and the ⋮ menu now sit in translucent circles over the page, like the back button, instead of scrolling with the title.
 - **Readable text and icons:** text and icons that were drawn in pure black (for example the top buttons) now use the theme colors.
@@ -21,12 +30,14 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Playing a video now pauses music and other media playing on the phone.
 - Videos: pressing play after the video ended restarts it, and rotating the screen no longer sends the video back to the start.
 - Photos: layout changes happen only by pinching (the ⋮ button is gone), and the photos now slide into their new places instead of jumping.
 - Viewer: the bottom bar now spans the screen with labeled actions (Share, Edit, Trash) like Google Photos, and Favorite moved to the top.
 - Vault: opening a photo or video inside the vault no longer locks it (it showed a black screen and asked for the password again). The vault now locks only when you leave the app or the screen.
 
 ### Added
+- **Empty trash** is available from the ⋮ menu inside the Trash.
 - **Delete without asking is requested on first launch**, right after photo access (Settings → Gallery → Deleting lets you turn it off). The video progress bar now glides smoothly like BoomListener's, and the Albums screen has compact shortcuts above a grid of album cards.
 - Settings → Gallery → Deleting: shortcut to allow "Delete without asking", so moving to trash and deleting no longer show Android's confirmation panel.
 - **Photo editor:** open a photo, tap ⋮ → Edit to rotate, flip, crop (1:1, 4:3, 3:4, 16:9 or the original shape, with zoom), adjust brightness, contrast and color, or apply a filter. It saves a copy next to the original; the original never changes.

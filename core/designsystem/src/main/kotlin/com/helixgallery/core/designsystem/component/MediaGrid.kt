@@ -42,6 +42,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import androidx.compose.ui.unit.IntOffset
@@ -97,13 +105,60 @@ fun MediaGrid(
     onZoomStep: ((zoomOut: Boolean) -> Unit)? = null,
 ) {
     val selecting = selectedIds.isNotEmpty()
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val currentSelected by rememberUpdatedState(selectedIds)
+    val currentEntries by rememberUpdatedState(entries)
+    val currentOnToggle: (Long) -> Unit = { id ->
+        currentEntries.firstNotNullOfOrNull { (it as? GridEntry.Media)?.item?.takeIf { m -> m.id == id } }?.let(onToggleSelect)
+    }
     // Ao pinçar, as fotos deslizam para o novo lugar (em vez de pular).
     val placementSpec = helixSpatialSpec<IntOffset>()
     val fadeSpec = helixEffectsSpec<Float>()
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = state,
-        modifier = (if (onZoomStep != null) modifier.pinchToZoom(onZoomStep) else modifier).fillMaxSize(),
+        modifier = (if (onZoomStep != null) modifier.pinchToZoom(onZoomStep) else modifier)
+            .fillMaxSize()
+            .pointerInput(state) {
+                // Segurar numa foto marca; sem soltar, deslizar o dedo por cima das outras marca elas também.
+                val visited = mutableSetOf<Long>()
+                val edge = 88.dp.toPx()
+                fun itemAt(position: Offset): Long? {
+                    val info = state.layoutInfo.visibleItemsInfo.firstOrNull { item ->
+                        position.x >= item.offset.x && position.x < item.offset.x + item.size.width &&
+                            position.y >= item.offset.y && position.y < item.offset.y + item.size.height
+                    }
+                    val key = info?.key as? String ?: return null
+                    return if (key.startsWith("m")) key.substring(1).toLongOrNull() else null
+                }
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { position ->
+                        visited.clear()
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        itemAt(position)?.let { id ->
+                            visited.add(id)
+                            currentOnToggle(id)
+                        }
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        itemAt(change.position)?.let { id ->
+                            if (visited.add(id) && id !in currentSelected) currentOnToggle(id)
+                        }
+                        // Perto da borda de cima ou de baixo, a grade rola sozinha.
+                        val height = state.layoutInfo.viewportSize.height
+                        val push = when {
+                            change.position.y < edge -> -EDGE_SCROLL_PX
+                            change.position.y > height - edge -> EDGE_SCROLL_PX
+                            else -> 0f
+                        }
+                        if (push != 0f) scope.launch { state.scrollBy(push) }
+                    },
+                    onDragEnd = { visited.clear() },
+                    onDragCancel = { visited.clear() },
+                )
+            },
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -150,12 +205,13 @@ fun MediaGrid(
                     onClick = {
                         if (selecting) onToggleSelect(entry.item) else onOpen(entry.item)
                     },
-                    onLongClick = { onToggleSelect(entry.item) },
                 )
             }
         }
     }
 }
+
+private const val EDGE_SCROLL_PX = 28f
 
 /** Uma foto ou vídeo na grade, com marcas de vídeo, favorito e seleção. */
 @OptIn(ExperimentalFoundationApi::class)
@@ -165,8 +221,8 @@ fun MediaTile(
     selected: Boolean,
     selecting: Boolean,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val scale by animateFloatAsState(
         targetValue = if (selected) 0.84f else 1f,

@@ -18,6 +18,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import androidx.compose.ui.input.pointer.positionChange
+import kotlin.math.abs
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.animate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -28,6 +35,7 @@ import androidx.compose.ui.unit.IntSize
 import com.helixgallery.core.designsystem.component.HelixImage
 
 private const val MAX_ZOOM = 6f
+private const val DOUBLE_TAP_ZOOM = 2.5f
 
 /**
  * Foto com zoom por pinça e arrasto, e toque duplo para ampliar. Sem zoom, os gestos
@@ -39,7 +47,11 @@ fun ZoomableImage(
     onTap: () -> Unit,
     onZoomChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onSwipeUp: (() -> Unit)? = null,
 ) {
+    val scope = rememberCoroutineScope()
+    var zoomJob by remember { mutableStateOf<Job?>(null) }
+    val zoomSpec = helixSpatialSpec<Float>()
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -53,19 +65,60 @@ fun ZoomableImage(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onTap() },
-                    onDoubleTap = {
-                        if (scale > 1.01f) {
-                            scale = 1f
-                            offset = Offset.Zero
+                    // Toque duplo anima o zoom (nada de salto), ampliando em volta do ponto tocado.
+                    onDoubleTap = { tap ->
+                        val fromScale = scale
+                        val fromOffset = offset
+                        val zoomIn = fromScale <= 1.01f
+                        val toScale = if (zoomIn) DOUBLE_TAP_ZOOM else 1f
+                        val toOffset = if (zoomIn) {
+                            val cx = tap.x - size.width / 2f
+                            val cy = tap.y - size.height / 2f
+                            val maxX = size.width * (toScale - 1f) / 2f
+                            val maxY = size.height * (toScale - 1f) / 2f
+                            Offset(
+                                (-cx * (toScale - 1f)).coerceIn(-maxX, maxX),
+                                (-cy * (toScale - 1f)).coerceIn(-maxY, maxY),
+                            )
                         } else {
-                            scale = 2.5f
+                            Offset.Zero
+                        }
+                        zoomJob?.cancel()
+                        zoomJob = scope.launch {
+                            animate(0f, 1f, animationSpec = zoomSpec) { t, _ ->
+                                scale = fromScale + (toScale - fromScale) * t
+                                offset = Offset(
+                                    fromOffset.x + (toOffset.x - fromOffset.x) * t,
+                                    fromOffset.y + (toOffset.y - fromOffset.y) * t,
+                                )
+                            }
                         }
                     },
                 )
             }
+            .pointerInput(onSwipeUp) {
+                // Puxar para cima (sem zoom, um dedo só) abre os detalhes; não consome, o carrossel segue livre.
+                if (onSwipeUp == null) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var dx = 0f
+                    var dy = 0f
+                    var single = true
+                    do {
+                        val event = awaitPointerEvent()
+                        if (event.changes.size > 1) single = false
+                        event.changes.firstOrNull()?.let {
+                            dx += it.positionChange().x
+                            dy += it.positionChange().y
+                        }
+                    } while (event.changes.any { it.pressed })
+                    if (single && scale <= 1.01f && dy < -viewConfiguration.touchSlop * 6 && -dy > abs(dx) * 2f) onSwipeUp()
+                }
+            }
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
+                    zoomJob?.cancel()
                     do {
                         val event = awaitPointerEvent()
                         val multi = event.changes.size > 1

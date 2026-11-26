@@ -14,6 +14,16 @@ import kotlinx.coroutines.withContext
 interface MediaWriter {
     /** Salva [bitmap] como JPEG. Devolve false se não deu. A cópia fica na mesma pasta do original (se for DCIM ou Pictures). */
     suspend fun saveJpeg(bitmap: Bitmap, displayName: String, relativePath: String, takenMs: Long): Boolean
+
+    /** Copia o arquivo [sourceUri] para a pasta [relativePath] (o original continua onde está). Devolve false se não deu. */
+    suspend fun copyToFolder(
+        sourceUri: String,
+        displayName: String,
+        mimeType: String,
+        isVideo: Boolean,
+        relativePath: String,
+        takenMs: Long,
+    ): Boolean
 }
 
 object MediaWriterData {
@@ -52,4 +62,42 @@ private class MediaStoreWriter(private val context: Context) : MediaWriter {
                 false
             }
         }
+
+    override suspend fun copyToFolder(
+        sourceUri: String,
+        displayName: String,
+        mimeType: String,
+        isVideo: Boolean,
+        relativePath: String,
+        takenMs: Long,
+    ): Boolean = withContext(Dispatchers.IO) {
+        val resolver = context.contentResolver
+        val collection = if (isVideo) {
+            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        }
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+            if (takenMs > 0) put(MediaStore.MediaColumns.DATE_TAKEN, takenMs)
+        }
+        val target = try {
+            resolver.insert(collection, values)
+        } catch (_: Exception) {
+            null
+        } ?: return@withContext false
+        try {
+            val input = resolver.openInputStream(android.net.Uri.parse(sourceUri)) ?: error("no input")
+            val output = resolver.openOutputStream(target) ?: error("no output")
+            input.use { i -> output.use { o -> i.copyTo(o) } }
+            resolver.update(target, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+            true
+        } catch (_: Exception) {
+            resolver.delete(target, null, null)
+            false
+        }
+    }
 }

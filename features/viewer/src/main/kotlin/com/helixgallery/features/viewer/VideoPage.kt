@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -37,6 +38,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.media3.common.MediaItem as ExoMediaItem
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -66,6 +69,14 @@ fun VideoPage(
     var wantsPlay by rememberSaveable(uri) { mutableStateOf(true) }
     val player = remember(uri) {
         ExoPlayer.Builder(context).build().apply {
+            // Declara que isto é reprodução de mídia e cuida do foco de áudio: ao tocar, o resto do sistema pausa.
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                true,
+            )
             setMediaItem(ExoMediaItem.fromUri(Uri.parse(uri)), savedPositionMs)
             prepare()
         }
@@ -166,7 +177,7 @@ fun VideoPage(
                 Text(
                     text = "${formatDuration(positionMs)} / ${formatDuration(durationMs)}",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color.White,
                 )
                 HelixFloatingCircle(Modifier.padding(start = 8.dp)) {
                     IconButton(

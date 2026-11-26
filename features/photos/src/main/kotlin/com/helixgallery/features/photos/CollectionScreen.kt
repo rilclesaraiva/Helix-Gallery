@@ -33,6 +33,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import com.helixgallery.core.designsystem.component.recedeWhileSelecting
+import com.helixgallery.core.designsystem.component.HelixSelectionBar
+import com.helixgallery.core.designsystem.component.HelixConfirmSheet
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -107,13 +116,90 @@ fun CollectionScreen(
     BackHandler(enabled = selectedIds.isNotEmpty()) { viewModel.clearSelection() }
 
     val pageTitle = title ?: items.firstOrNull()?.bucketName.orEmpty()
+    val selecting = selectedIds.isNotEmpty()
+    // O app confirma antes de apagar (no lugar da caixa do sistema).
+    var confirm by remember { mutableStateOf<Confirm?>(null) }
+
     val titleRow: @Composable () -> Unit = {
-        HelixPageTitle(
-            title = pageTitle,
-            hasBack = onBack != null,
-            actionsInset = helixActionsInset(if (onOpenSettings != null) 1 else 0),
-        )
+        Box(Modifier.recedeWhileSelecting(selecting)) {
+            HelixPageTitle(
+                title = pageTitle,
+                hasBack = onBack != null,
+                actionsInset = helixActionsInset(
+                    (if (onOpenSettings != null) 1 else 0) + (if (inTrash && items.isNotEmpty()) 1 else 0),
+                ),
+            )
+        }
     }
+    val selectionActions = buildList {
+        if (!inTrash) {
+            add(
+                HelixMenuAction(
+                    stringResource(R.string.photos_share),
+                    Icons.Filled.Share,
+                    onClick = {
+                        context.shareMedia(
+                            uris = selectedItems.map { it.uri },
+                            mimeTypes = selectedItems.map { it.mimeType },
+                            title = context.getString(R.string.photos_share),
+                        )
+                    },
+                ),
+            )
+            val allFavorite = selectedItems.isNotEmpty() && selectedItems.all { it.isFavorite }
+            add(
+                HelixMenuAction(
+                    stringResource(if (allFavorite) R.string.photos_unfavorite else R.string.photos_favorite),
+                    if (allFavorite) Icons.Filled.FavoriteBorder else Icons.Filled.Favorite,
+                    onClick = { launch(viewModel.repository.favoriteRequest(selectedItems.map { it.uri }, !allFavorite)) },
+                ),
+            )
+            if (onMoveToVault != null) {
+                add(
+                    HelixMenuAction(
+                        stringResource(R.string.photos_move_to_vault),
+                        HelixIcons.Lock,
+                        onClick = {
+                            onMoveToVault(selectedItems)
+                            viewModel.clearSelection()
+                        },
+                    ),
+                )
+            }
+            add(
+                HelixMenuAction(
+                    stringResource(R.string.photos_trash),
+                    Icons.Filled.Delete,
+                    destructive = true,
+                    onClick = { confirm = Confirm.Trash },
+                ),
+            )
+        } else {
+            add(
+                HelixMenuAction(
+                    stringResource(R.string.photos_restore),
+                    Icons.Filled.Refresh,
+                    onClick = { launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, false)) },
+                ),
+            )
+            add(
+                HelixMenuAction(
+                    stringResource(R.string.photos_delete_forever),
+                    Icons.Filled.Delete,
+                    destructive = true,
+                    onClick = { confirm = Confirm.DeleteForever },
+                ),
+            )
+        }
+    }
+    val trashMenu = listOf(
+        HelixMenuAction(
+            stringResource(R.string.photos_empty_trash_action),
+            Icons.Filled.Delete,
+            destructive = true,
+            onClick = { confirm = Confirm.EmptyTrash },
+        ),
+    )
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         when {
@@ -147,9 +233,14 @@ fun CollectionScreen(
             }
         }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
-        // Ajustes e ⋮ flutuam no canto, como o voltar; a barra da seleção toma o lugar deles.
-        if (selectedIds.isEmpty()) {
-            HelixFloatingActions(Modifier.align(Alignment.TopEnd)) {
+        // Ajustes (e o ⋮ da lixeira) flutuam no canto, como o voltar; com seleção, a barra do Boom toma o lugar.
+        AnimatedVisibility(
+            visible = !selecting,
+            modifier = Modifier.align(Alignment.TopEnd),
+            enter = fadeIn(helixEffectsSpec()),
+            exit = fadeOut(helixEffectsSpec()),
+        ) {
+            HelixFloatingActions {
                 if (onOpenSettings != null) {
                     HelixFloatingCircle {
                         IconButton(onClick = onOpenSettings) {
@@ -157,108 +248,63 @@ fun CollectionScreen(
                         }
                     }
                 }
+                if (inTrash && items.isNotEmpty()) HelixMoreMenu(actions = trashMenu)
             }
         }
-        if (selectedIds.isNotEmpty()) {
-            // A barra da seleção toma o lugar do voltar.
-            SelectionBar(
-                count = selectedIds.size,
-                allFavorite = selectedItems.isNotEmpty() && selectedItems.all { it.isFavorite },
-                inTrash = inTrash,
-                onClose = viewModel::clearSelection,
-                onShare = {
-                    context.shareMedia(
-                        uris = selectedItems.map { it.uri },
-                        mimeTypes = selectedItems.map { it.mimeType },
-                        title = context.getString(R.string.photos_share),
-                    )
-                },
-                onFavorite = { favorite ->
-                    launch(viewModel.repository.favoriteRequest(selectedItems.map { it.uri }, favorite))
-                },
-                onMoveToVault = onMoveToVault?.let { move ->
-                    {
-                        move(selectedItems)
-                        viewModel.clearSelection()
-                    }
-                },
-                onTrash = {
-                    launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, !inTrash))
-                },
-                onDelete = {
-                    launch(viewModel.repository.deleteRequest(selectedItems.map { it.uri }))
-                },
-                modifier = Modifier.align(Alignment.TopCenter),
-            )
-        } else if (onBack != null) {
-            HelixFloatingBackButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart))
+        if (onBack != null) {
+            AnimatedVisibility(
+                visible = !selecting,
+                modifier = Modifier.align(Alignment.TopStart),
+                enter = fadeIn(helixEffectsSpec()),
+                exit = fadeOut(helixEffectsSpec()),
+            ) {
+                HelixFloatingBackButton(onClick = onBack)
+            }
         }
+        HelixSelectionBar(
+            visible = selecting,
+            count = selectedIds.size,
+            allSelected = items.isNotEmpty() && selectedIds.containsAll(items.map { it.id }),
+            onClose = viewModel::clearSelection,
+            onToggleAll = { all -> if (all) viewModel.selectAll(items.map { it.id }) else viewModel.clearSelection() },
+            actions = selectionActions,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+    }
+
+    confirm?.let { kind ->
+        val count = if (kind == Confirm.EmptyTrash) items.size else selectedItems.size
+        HelixConfirmSheet(
+            title = when (kind) {
+                Confirm.Trash -> pluralStringResource(R.plurals.photos_confirm_trash_title, count, count)
+                Confirm.DeleteForever -> pluralStringResource(R.plurals.photos_confirm_delete_title, count, count)
+                Confirm.EmptyTrash -> stringResource(R.string.photos_confirm_empty_title)
+            },
+            message = when (kind) {
+                Confirm.Trash -> stringResource(R.string.photos_confirm_trash_message)
+                Confirm.DeleteForever -> stringResource(R.string.photos_confirm_delete_message)
+                Confirm.EmptyTrash -> pluralStringResource(R.plurals.photos_confirm_empty_message, count, count)
+            },
+            confirmLabel = stringResource(
+                when (kind) {
+                    Confirm.Trash -> R.string.photos_trash
+                    Confirm.DeleteForever -> R.string.photos_delete
+                    Confirm.EmptyTrash -> R.string.photos_empty_trash_action
+                },
+            ),
+            onConfirm = {
+                when (kind) {
+                    Confirm.Trash -> launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, true))
+                    Confirm.DeleteForever -> launch(viewModel.repository.deleteRequest(selectedItems.map { it.uri }))
+                    Confirm.EmptyTrash -> launch(viewModel.repository.deleteRequest(items.map { it.uri }))
+                }
+            },
+            onDismiss = { confirm = null },
+        )
     }
 }
 
-@Composable
-private fun SelectionBar(
-    count: Int,
-    allFavorite: Boolean,
-    inTrash: Boolean,
-    onClose: () -> Unit,
-    onShare: () -> Unit,
-    onFavorite: (Boolean) -> Unit,
-    onMoveToVault: (() -> Unit)?,
-    onTrash: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // Barra que flutua sobre a grade (nada de barra presa no topo); a grade aparece por trás.
-    Surface(
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = FLOATING_BUTTON_ALPHA),
-        shadowElevation = 3.dp,
-        modifier = modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onClose) {
-            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.photos_clear_selection))
-        }
-        Text(
-            text = pluralStringResource(R.plurals.photos_selected, count, count),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        if (!inTrash) {
-            IconButton(onClick = onShare) {
-                Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.photos_share))
-            }
-            IconButton(onClick = { onFavorite(!allFavorite) }) {
-                Icon(
-                    if (allFavorite) Icons.Filled.FavoriteBorder else Icons.Filled.Favorite,
-                    contentDescription = stringResource(if (allFavorite) R.string.photos_unfavorite else R.string.photos_favorite),
-                )
-            }
-        }
-        if (!inTrash && onMoveToVault != null) {
-            IconButton(onClick = onMoveToVault) {
-                Icon(HelixIcons.Lock, contentDescription = stringResource(R.string.photos_move_to_vault))
-            }
-        }
-        IconButton(onClick = onTrash) {
-            Icon(
-                if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
-                contentDescription = stringResource(if (inTrash) R.string.photos_restore else R.string.photos_trash),
-            )
-        }
-        if (inTrash) {
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.photos_delete_forever))
-            }
-        }
-    }
-    }
-}
+private enum class Confirm { Trash, DeleteForever, EmptyTrash }
 
 @Composable
 private fun EmptyState(inTrash: Boolean) {

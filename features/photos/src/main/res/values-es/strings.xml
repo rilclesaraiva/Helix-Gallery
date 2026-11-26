@@ -12,11 +12,28 @@
     <string name="photos_share">Compartir</string>
     <string name="photos_favorite">Añadir a favoritos</string>
     <string name="photos_unfavorite">Quitar de favoritos</string>
-    <string name="photos_trash">Mover a la papelera</string>
+    <string name="photos_trash">Papelera</string>
     <string name="photos_restore">Restaurar</string>
     <string name="photos_delete_forever">Eliminar definitivamente</string>
     <string name="photos_empty">Aún no hay nada aquí.</string>
     <string name="photos_empty_trash">La papelera está vacía. Los elementos se quedan aquí 30 días.</string>
     <string name="photos_settings">Ajustes</string>
     <string name="photos_move_to_vault">Mover a la caja fuerte</string>
+    <string name="photos_empty_trash_action">Vaciar papelera</string>
+    <string name="photos_delete">Eliminar</string>
+    <plurals name="photos_confirm_trash_title">
+        <item quantity="one">¿Mover %d elemento a la papelera?</item>
+        <item quantity="other">¿Mover %d elementos a la papelera?</item>
+    </plurals>
+    <string name="photos_confirm_trash_message">Se quedan en la papelera 30 días y puedes restaurarlos en cualquier momento antes.</string>
+    <plurals name="photos_confirm_delete_title">
+        <item quantity="one">¿Eliminar %d elemento para siempre?</item>
+        <item quantity="other">¿Eliminar %d elementos para siempre?</item>
+    </plurals>
+    <string name="photos_confirm_delete_message">Esto no se puede deshacer.</string>
+    <string name="photos_confirm_empty_title">¿Vaciar la papelera?</string>
+    <plurals name="photos_confirm_empty_message">
+        <item quantity="one">Se eliminará %d elemento para siempre. Esto no se puede deshacer.</item>
+        <item quantity="other">Se eliminarán %d elementos para siempre. Esto no se puede deshacer.</item>
+    </plurals>
 </resources>

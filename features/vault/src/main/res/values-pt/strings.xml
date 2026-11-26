@@ -45,4 +45,8 @@
         <item quantity="one">%d item devolvido à galeria</item>
         <item quantity="other">%d itens devolvidos à galeria</item>
     </plurals>
+    <string name="vault_create_title">Crie seu cofre</string>
+    <string name="vault_locked_title">Cofre bloqueado</string>
+    <string name="vault_show_password">Mostrar senha</string>
+    <string name="vault_hide_password">Esconder senha</string>
 </resources>

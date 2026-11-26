@@ -11,4 +11,6 @@
     <string name="ds_pause">Pause</string>
     <string name="ds_mute">Mute</string>
     <string name="ds_unmute">Unmute</string>
+    <string name="ds_cancel">Cancel</string>
+    <string name="ds_select_all">Select all</string>
 </resources>

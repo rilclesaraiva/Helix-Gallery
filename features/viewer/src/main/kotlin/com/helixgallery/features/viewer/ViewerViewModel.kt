@@ -10,7 +10,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.helixgallery.core.model.MediaState
 import com.helixgallery.data.media.MediaData
+import com.helixgallery.core.model.MediaItem
 import com.helixgallery.data.media.MediaRepository
+import com.helixgallery.data.media.MediaWriterData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,6 +37,23 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
 
     val media: StateFlow<MediaState> = repository.state
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaState())
+
+    private val writer = MediaWriterData.writer(application)
+
+    /** Copia [item] para a pasta [relativePath] (o original fica). [onDone] recebe se deu certo. */
+    fun copyTo(item: MediaItem, relativePath: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = writer.copyToFolder(
+                sourceUri = item.uri,
+                displayName = item.displayName,
+                mimeType = item.mimeType,
+                isVideo = item.isVideo,
+                relativePath = relativePath,
+                takenMs = item.takenMs,
+            )
+            onDone(ok)
+        }
+    }
 
     private val _exif = MutableStateFlow<ExifInfo?>(null)
     val exif: StateFlow<ExifInfo?> = _exif.asStateFlow()

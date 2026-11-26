@@ -45,4 +45,8 @@
         <item quantity="one">%d elemento devuelto a la galería</item>
         <item quantity="other">%d elementos devueltos a la galería</item>
     </plurals>
+    <string name="vault_create_title">Crea tu bóveda</string>
+    <string name="vault_locked_title">Bóveda bloqueada</string>
+    <string name="vault_show_password">Mostrar contraseña</string>
+    <string name="vault_hide_password">Ocultar contraseña</string>
 </resources>

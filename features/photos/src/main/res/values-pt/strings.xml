@@ -12,11 +12,28 @@
     <string name="photos_share">Compartilhar</string>
     <string name="photos_favorite">Adicionar aos favoritos</string>
     <string name="photos_unfavorite">Remover dos favoritos</string>
-    <string name="photos_trash">Mover para a lixeira</string>
+    <string name="photos_trash">Lixeira</string>
     <string name="photos_restore">Restaurar</string>
     <string name="photos_delete_forever">Excluir permanentemente</string>
     <string name="photos_empty">Nada por aqui ainda.</string>
     <string name="photos_empty_trash">A lixeira está vazia. Os itens ficam aqui por 30 dias.</string>
     <string name="photos_settings">Ajustes</string>
     <string name="photos_move_to_vault">Mover para o cofre</string>
+    <string name="photos_empty_trash_action">Esvaziar lixeira</string>
+    <string name="photos_delete">Apagar</string>
+    <plurals name="photos_confirm_trash_title">
+        <item quantity="one">Mover %d item para a lixeira?</item>
+        <item quantity="other">Mover %d itens para a lixeira?</item>
+    </plurals>
+    <string name="photos_confirm_trash_message">Eles ficam na lixeira por 30 dias, e você pode restaurá-los a qualquer momento antes disso.</string>
+    <plurals name="photos_confirm_delete_title">
+        <item quantity="one">Apagar %d item para sempre?</item>
+        <item quantity="other">Apagar %d itens para sempre?</item>
+    </plurals>
+    <string name="photos_confirm_delete_message">Isso não pode ser desfeito.</string>
+    <string name="photos_confirm_empty_title">Esvaziar a lixeira?</string>
+    <plurals name="photos_confirm_empty_message">
+        <item quantity="one">%d item será apagado para sempre. Isso não pode ser desfeito.</item>
+        <item quantity="other">%d itens serão apagados para sempre. Isso não pode ser desfeito.</item>
+    </plurals>
 </resources>

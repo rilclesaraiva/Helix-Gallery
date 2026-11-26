@@ -72,6 +72,13 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.DisposableEffect
 import androidx.activity.ComponentActivity
@@ -307,32 +314,85 @@ private fun PendingNote(count: Int) {
     }
 }
 
+/** Campo de senha de bordas bem redondas, com o olho para mostrar/esconder (como no Babel-Manager). */
 @Composable
-private fun PasswordField(value: String, onChange: (String) -> Unit, label: String) {
+private fun PasswordField(
+    value: String,
+    onChange: (String) -> Unit,
+    label: String,
+    imeAction: ImeAction = ImeAction.Next,
+    onDone: (() -> Unit)? = null,
+) {
+    var visible by rememberSaveable { mutableStateOf(false) }
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
         label = { Text(label) },
         singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        shape = CircleShape,
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction, autoCorrectEnabled = false),
+        keyboardActions = KeyboardActions(onDone = { onDone?.invoke() }),
+        trailingIcon = {
+            IconButton(onClick = { visible = !visible }) {
+                Icon(
+                    if (visible) HelixIcons.VisibilityOff else HelixIcons.Visibility,
+                    contentDescription = stringResource(if (visible) R.string.vault_hide_password else R.string.vault_show_password),
+                )
+            }
+        },
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** Tela de senha no estilo do Babel-Manager: círculo com cadeado, título, dica e os campos, no centro. */
+@Composable
+private fun LockLayout(title: String, hint: String, content: @Composable () -> Unit) {
+    Box(
+        Modifier.fillMaxSize().imePadding().navigationBarsPadding(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier.widthIn(max = 480.dp).verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Surface(
+                modifier = Modifier.size(88.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(HelixIcons.Lock, contentDescription = null, modifier = Modifier.size(40.dp))
+                }
+            }
+            Text(title, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            Text(
+                hint,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            content()
+        }
+    }
 }
 
 @Composable
 private fun CreatePage(busy: Boolean, pending: Int, onCreate: (String, String) -> Unit) {
     var password by rememberSaveable { mutableStateOf("") }
     var confirmation by rememberSaveable { mutableStateOf("") }
-    FormPage {
-        Text(
-            stringResource(R.string.vault_create_intro),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    LockLayout(stringResource(R.string.vault_create_title), stringResource(R.string.vault_create_intro)) {
         PendingNote(pending)
         PasswordField(password, { password = it }, stringResource(R.string.vault_password))
-        PasswordField(confirmation, { confirmation = it }, stringResource(R.string.vault_confirm))
+        PasswordField(
+            confirmation,
+            { confirmation = it },
+            stringResource(R.string.vault_confirm),
+            imeAction = ImeAction.Done,
+            onDone = { onCreate(password, confirmation) },
+        )
         Button(
             onClick = { onCreate(password, confirmation) },
             enabled = !busy,
@@ -358,28 +418,24 @@ private fun LockedPage(
             onQuickUnlock()
         }
     }
-    FormPage {
-        Text(
-            stringResource(R.string.vault_locked_intro),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    LockLayout(stringResource(R.string.vault_locked_title), stringResource(R.string.vault_locked_intro)) {
         PendingNote(pending)
+        PasswordField(
+            password,
+            { password = it },
+            stringResource(R.string.vault_password),
+            imeAction = ImeAction.Done,
+            onDone = { onUnlock(password) },
+        )
+        Button(
+            onClick = { onUnlock(password) },
+            enabled = !busy && password.isNotEmpty(),
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(stringResource(R.string.vault_unlock)) }
         if (quickEnabled) {
-            Button(onClick = onQuickUnlock, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                Icon(HelixIcons.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(R.string.vault_quick_unlock))
-            }
-        }
-        PasswordField(password, { password = it }, stringResource(R.string.vault_password))
-        if (quickEnabled) {
-            OutlinedButton(onClick = { onUnlock(password) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.vault_unlock))
-            }
-        } else {
-            Button(onClick = { onUnlock(password) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.vault_unlock))
+            FilledTonalButton(onClick = onQuickUnlock, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Icon(HelixIcons.Lock, contentDescription = null, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.vault_quick_unlock), modifier = Modifier.padding(start = 8.dp))
             }
         }
     }

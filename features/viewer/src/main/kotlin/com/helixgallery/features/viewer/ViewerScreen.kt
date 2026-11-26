@@ -19,6 +19,16 @@ import androidx.compose.foundation.layout.Row
 import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.helixgallery.core.designsystem.component.HelixIcons
+import com.helixgallery.core.designsystem.component.HelixConfirmSheet
+import com.helixgallery.core.model.buildAlbums
+import com.helixgallery.core.model.AlbumSummary
+import android.widget.Toast
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -81,6 +91,7 @@ fun ViewerScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onEdit: ((MediaItem) -> Unit)? = null,
+    onMoveToVault: ((MediaItem) -> Unit)? = null,
     viewModel: ViewerViewModel = viewModel(),
 ) {
     val state by viewModel.media.collectAsStateWithLifecycle()
@@ -89,7 +100,7 @@ fun ViewerScreen(
         when {
             !state.loaded -> HelixLoading()
             items.isEmpty() -> LaunchedEffect(Unit) { onBack() }
-            else -> ViewerContent(source, items, startId, onBack, onEdit, viewModel)
+            else -> ViewerContent(source, items, startId, onBack, onEdit, onMoveToVault, viewModel)
         }
     }
 }
@@ -101,6 +112,7 @@ private fun ViewerContent(
     startId: Long,
     onBack: () -> Unit,
     onEdit: ((MediaItem) -> Unit)?,
+    onMoveToVault: ((MediaItem) -> Unit)?,
     viewModel: ViewerViewModel,
 ) {
     val context = LocalContext.current
@@ -111,6 +123,8 @@ private fun ViewerContent(
     var chrome by remember { mutableStateOf(true) }
     var zoomed by remember { mutableStateOf(false) }
     var details by remember { mutableStateOf(false) }
+    var addTo by remember { mutableStateOf(false) }
+    var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
     val inTrash = source == MediaSource.Trash
     val current = items[pagerState.currentPage.coerceIn(0, items.lastIndex)]
 
@@ -132,41 +146,10 @@ private fun ViewerContent(
     fun trashOrRestore() = launch(viewModel.repository.trashRequest(listOf(current.uri), !inTrash))
     fun deleteForever() = launch(viewModel.repository.deleteRequest(listOf(current.uri)))
 
-    // O menu dos três pontinhos: das ações mais usadas às mais raras, a destrutiva por último.
-    val menuActions = buildList {
-        if (!inTrash) {
-            add(HelixMenuAction(stringResource(R.string.viewer_share), Icons.Filled.Share, onClick = ::share))
-            add(
-                HelixMenuAction(
-                    stringResource(if (current.isFavorite) R.string.viewer_unfavorite else R.string.viewer_favorite),
-                    if (current.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    onClick = ::toggleFavorite,
-                ),
-            )
-        }
-        if (!inTrash && !current.isVideo && onEdit != null) {
-            add(HelixMenuAction(stringResource(R.string.viewer_edit), Icons.Filled.Edit, onClick = { onEdit(current) }))
-        }
-        add(HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails))
-        add(
-            HelixMenuAction(
-                stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
-                if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
-                destructive = !inTrash,
-                onClick = ::trashOrRestore,
-            ),
-        )
-        if (inTrash) {
-            add(
-                HelixMenuAction(
-                    stringResource(R.string.viewer_delete_forever),
-                    Icons.Filled.Delete,
-                    destructive = true,
-                    onClick = ::deleteForever,
-                ),
-            )
-        }
-    }
+    // Os três pontinhos guardam só o que NÃO está na barra de baixo (compartilhar, editar, adicionar e lixeira já estão lá).
+    val menuActions = listOf(
+        HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails),
+    )
 
     Box(Modifier.fillMaxSize()) {
         HorizontalPager(
@@ -188,6 +171,7 @@ private fun ViewerContent(
                     uri = item.uri,
                     onTap = { chrome = !chrome },
                     onZoomChanged = { if (page == pagerState.currentPage) zoomed = it },
+                    onSwipeUp = { if (page == pagerState.currentPage) showDetails() },
                 )
             }
         }
@@ -241,36 +225,116 @@ private fun ViewerContent(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            // Barra inferior no padrão do Google Fotos: de ponta a ponta, ícone com rótulo embaixo
-            // (diferente da barra flutuante da tela inicial).
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FLOATING_BUTTON_ALPHA),
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth(),
+            // Barra inferior no padrão do Google Fotos: sem fundo cinza, só os ícones com rótulo sobre a foto,
+            // com um leve escurecimento bem transparente atrás para continuarem legíveis.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)))),
             ) {
-                Row(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    if (!inTrash) {
-                        LabeledBarButton(Icons.Filled.Share, stringResource(R.string.viewer_share), Modifier.weight(1f)) { share() }
-                        if (!current.isVideo && onEdit != null) {
-                            LabeledBarButton(Icons.Filled.Edit, stringResource(R.string.viewer_edit), Modifier.weight(1f)) { onEdit(current) }
+                CompositionLocalProvider(LocalContentColor provides Color.White) {
+                    Row(Modifier.navigationBarsPadding().padding(start = 8.dp, end = 8.dp, top = 24.dp, bottom = 4.dp)) {
+                        if (!inTrash) {
+                            LabeledBarButton(Icons.Filled.Share, stringResource(R.string.viewer_share), Modifier.weight(1f)) { share() }
+                            if (!current.isVideo && onEdit != null) {
+                                LabeledBarButton(Icons.Filled.Edit, stringResource(R.string.viewer_edit), Modifier.weight(1f)) { onEdit(current) }
+                            }
+                            LabeledBarButton(HelixIcons.Add, stringResource(R.string.viewer_add_to), Modifier.weight(1f)) { addTo = true }
                         }
-                    }
-                    LabeledBarButton(
-                        if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
-                        stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
-                        Modifier.weight(1f),
-                    ) { trashOrRestore() }
-                    if (inTrash) {
-                        LabeledBarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever), Modifier.weight(1f)) { deleteForever() }
+                        LabeledBarButton(
+                            if (inTrash) Icons.Filled.Refresh else Icons.Filled.Delete,
+                            stringResource(if (inTrash) R.string.viewer_restore else R.string.viewer_trash),
+                            Modifier.weight(1f),
+                        ) { if (inTrash) trashOrRestore() else confirm = ViewerConfirm.Trash }
+                        if (inTrash) {
+                            LabeledBarButton(Icons.Filled.Delete, stringResource(R.string.viewer_delete_forever), Modifier.weight(1f)) {
+                                confirm = ViewerConfirm.DeleteForever
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    if (addTo) {
+        val all by viewModel.media.collectAsStateWithLifecycle()
+        val albums = remember(all) { buildAlbums(all.items) }
+        AddToSheet(
+            albums = albums.filter { it.bucketId != current.bucketId },
+            onVault = onMoveToVault?.let { move -> { move(current) } },
+            onAlbum = { album ->
+                viewModel.copyTo(current, album.cover.relativePath) { ok ->
+                    Toast.makeText(
+                        context,
+                        context.getString(if (ok) R.string.viewer_added else R.string.viewer_add_failed, album.name),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            },
+            onDismiss = { addTo = false },
+        )
+    }
+
+    confirm?.let { kind ->
+        HelixConfirmSheet(
+            title = stringResource(if (kind == ViewerConfirm.Trash) R.string.viewer_confirm_trash_title else R.string.viewer_confirm_delete_title),
+            message = stringResource(if (kind == ViewerConfirm.Trash) R.string.viewer_confirm_trash_message else R.string.viewer_confirm_delete_message),
+            confirmLabel = stringResource(if (kind == ViewerConfirm.Trash) R.string.viewer_trash else R.string.viewer_delete_forever),
+            onConfirm = { if (kind == ViewerConfirm.Trash) trashOrRestore() else deleteForever() },
+            onDismiss = { confirm = null },
+        )
+    }
+
     if (details) {
         DetailsSheet(item = current, viewModel = viewModel, onDismiss = { details = false })
+    }
+}
+
+private enum class ViewerConfirm { Trash, DeleteForever }
+
+/** Painel "Adicionar a": o cofre e as pastas do aparelho (a foto é copiada; o original fica). */
+@Composable
+private fun AddToSheet(
+    albums: List<AlbumSummary>,
+    onVault: (() -> Unit)?,
+    onAlbum: (AlbumSummary) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    HelixModalSheet(onDismiss = onDismiss) {
+        val sheet = this
+        Text(
+            text = stringResource(R.string.viewer_add_to),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        )
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            if (onVault != null) {
+                AddToRow(HelixIcons.Lock, stringResource(R.string.viewer_add_to_vault)) {
+                    onVault()
+                    sheet.dismiss()
+                }
+            }
+            albums.forEach { album ->
+                AddToRow(HelixIcons.Collections, album.name) {
+                    onAlbum(album)
+                    sheet.dismiss()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddToRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(16.dp))
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
     }
 }
 

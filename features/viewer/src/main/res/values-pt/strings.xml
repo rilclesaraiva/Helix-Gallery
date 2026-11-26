@@ -4,7 +4,7 @@
     <string name="viewer_favorite">Adicionar aos favoritos</string>
     <string name="viewer_unfavorite">Remover dos favoritos</string>
     <string name="viewer_details">Detalhes</string>
-    <string name="viewer_trash">Mover para a lixeira</string>
+    <string name="viewer_trash">Lixeira</string>
     <string name="viewer_restore">Restaurar</string>
     <string name="viewer_delete_forever">Excluir permanentemente</string>
     <string name="details_title">Detalhes</string>
@@ -22,4 +22,12 @@
     <string name="viewer_mute">Silenciar</string>
     <string name="viewer_unmute">Ativar som</string>
     <string name="viewer_edit">Editar</string>
+    <string name="viewer_add_to">Adicionar a</string>
+    <string name="viewer_add_to_vault">Adicionar ao cofre</string>
+    <string name="viewer_added">Adicionado a %1$s</string>
+    <string name="viewer_add_failed">Não deu para adicionar a %1$s</string>
+    <string name="viewer_confirm_trash_title">Mover para a lixeira?</string>
+    <string name="viewer_confirm_trash_message">Fica na lixeira por 30 dias, e você pode restaurar a qualquer momento antes disso.</string>
+    <string name="viewer_confirm_delete_title">Apagar para sempre?</string>
+    <string name="viewer_confirm_delete_message">Isso não pode ser desfeito.</string>
 </resources>

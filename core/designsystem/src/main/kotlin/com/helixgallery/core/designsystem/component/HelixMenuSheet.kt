@@ -59,13 +59,16 @@ fun HelixMoreMenu(
     actions: List<HelixMenuAction>,
     modifier: Modifier = Modifier,
     header: String? = null,
+    /** false: só o botão, para quem já o põe dentro de outra pílula (a barra de seleção). */
+    circle: Boolean = true,
 ) {
     var open by remember { mutableStateOf(false) }
-    HelixFloatingCircle(modifier) {
+    val button: @Composable () -> Unit = {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.ds_more))
         }
     }
+    if (circle) HelixFloatingCircle(modifier, button) else button()
     if (open) HelixMenuSheet(actions = actions, onDismiss = { open = false }, header = header)
 }
 

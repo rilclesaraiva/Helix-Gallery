@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.CompositionLocalProvider
+import com.helixgallery.core.designsystem.component.LocalSelectionBarActive
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
@@ -234,8 +238,35 @@ private fun HelixNavigation() {
     )
     val barSpec: FiniteAnimationSpec<IntOffset> = helixSpatialSpec()
 
-    CompositionLocalProvider(LocalTabReselect provides reselect) {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+    // Com itens selecionados, a barra de seleção toma o lugar da barra flutuante (como no BoomListener).
+    val selectionActive = remember { mutableStateOf(false) }
+    val selecting = selectionActive.value
+    val swipeThreshold = with(LocalDensity.current) { 72.dp.toPx() }
+
+    CompositionLocalProvider(LocalTabReselect provides reselect, LocalSelectionBarActive provides selectionActive) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                // Deslizar de lado troca de aba. Só vê o que a grade e os filhos não consumiram.
+                .pointerInput(onTab, selecting, selectedTab) {
+                    if (!onTab || selecting || selectedTab == null) return@pointerInput
+                    var total = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { total = 0f },
+                        onDragEnd = {
+                            val next = when {
+                                total <= -swipeThreshold -> selectedTab.ordinal + 1
+                                total >= swipeThreshold -> selectedTab.ordinal - 1
+                                else -> -1
+                            }
+                            if (next in Tab.entries.indices) openTab(Tab.entries[next])
+                        },
+                        onDragCancel = { total = 0f },
+                        onHorizontalDrag = { _, delta -> total += delta },
+                    )
+                },
+        ) {
             NavHost(
                 navController = navController,
                 startDestination = ROUTE_PHOTOS,
@@ -299,6 +330,10 @@ private fun HelixNavigation() {
                         source = MediaSource.parse(entry.arguments?.getString("source")),
                         startId = entry.arguments?.getLong("id") ?: 0L,
                         onBack = { navController.popBackStackOnce() },
+                        onMoveToVault = { item ->
+                            pendingVault = listOf(item)
+                            navController.navigateOnce(ROUTE_VAULT)
+                        },
                         onEdit = { item ->
                             navController.navigateOnce(
                                 "editor?uri=${Uri.encode(item.uri)}&name=${Uri.encode(item.displayName)}" +
@@ -366,7 +401,7 @@ private fun HelixNavigation() {
             }
             // A barra flutuante só aparece nas abas; telas de dentro ficam com a tela toda.
             AnimatedVisibility(
-                visible = onTab,
+                visible = onTab && !selecting,
                 enter = slideInVertically(barSpec) { it } + fadeIn(fadeSpec),
                 exit = slideOutVertically(barSpec) { it } + fadeOut(fadeSpec),
                 modifier = Modifier.align(Alignment.BottomCenter),
