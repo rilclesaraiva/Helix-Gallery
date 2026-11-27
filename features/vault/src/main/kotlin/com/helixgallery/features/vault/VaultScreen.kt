@@ -12,6 +12,7 @@ import android.hardware.biometrics.BiometricPrompt
 import android.os.CancellationSignal
 import android.os.PersistableBundle
 import android.content.ContextWrapper
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -159,6 +160,13 @@ fun VaultScreen(
 
     LaunchedEffect(Unit) {
         viewModel.messages.collect { Toast.makeText(context, messageText(context, it), Toast.LENGTH_LONG).show() }
+    }
+    // Tela protegida (FLAG_SECURE): o Android mostra tela preta nos apps recentes e bloqueia capturas
+    // enquanto o cofre está na tela; ao sair do cofre a janela volta ao normal.
+    DisposableEffect(context) {
+        val window = context.findComponentActivity()?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
     }
     // Saiu do app: tranca (a senha some da memória e os arquivos extraídos são apagados).
     // Atenção: o ciclo de vida da tela (NavBackStackEntry) também "para" ao abrir uma foto do cofre

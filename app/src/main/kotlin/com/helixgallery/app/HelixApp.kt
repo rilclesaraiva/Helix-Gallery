@@ -5,6 +5,7 @@ package com.helixgallery.app
 
 import android.content.Intent
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import android.provider.MediaStore
 import android.content.Context
 import android.net.Uri
@@ -232,6 +233,15 @@ private fun HelixNavigation() {
     val pagerState = rememberPagerState(pageCount = { Tab.entries.size })
     val tabScope = rememberCoroutineScope()
     val tabSpec: FiniteAnimationSpec<Float> = helixSpatialSpec()
+    // Rede de segurança: se um gesto de troca de aba for interrompido (voltar de outro app, a trava da
+    // rolagem rápida), o carrossel pode parar torto, mostrando um pedaço da aba vizinha. Parado e fora
+    // do lugar, ele desliza de volta para a aba atual.
+    LaunchedEffect(pagerState) {
+        snapshotFlow { !pagerState.isScrollInProgress && pagerState.currentPageOffsetFraction != 0f }
+            .collect { crooked ->
+                if (crooked) pagerState.animateScrollToPage(pagerState.currentPage, animationSpec = tabSpec)
+            }
+    }
     fun openTab(tab: Tab) {
         if (tab.ordinal == pagerState.currentPage) {
             reselect.tryEmit(tab.route)

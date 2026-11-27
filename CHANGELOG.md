@@ -7,6 +7,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- The vault is hidden from the Android recent-apps screen and from screenshots while it is open.
 - Hold and slide to select now also works in the vault, with the same range selection as the gallery.
 - Dragging the fast-scroll handle no longer fights the swipe between tabs: while your finger is on the handle, only vertical movement is accepted.
 - **Vault selection** now works like the gallery's: floating selection bar, round check marks, and Restore / Delete at the bottom of the screen. Restore and Delete also appear inside an opened photo or video in the vault and in the trash.
@@ -44,6 +45,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- After leaving the app and coming back, the tabs could stay slightly shifted, showing a piece of the neighbouring tab; they now slide back into place.
 - Videos stop as soon as you leave them (they kept playing for a few seconds during the closing animation).
 - Drag to select works again.
 - Vault: swipe sideways inside a photo or video to move to the next one, like in the gallery.
