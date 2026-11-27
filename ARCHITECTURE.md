@@ -4,15 +4,14 @@ Detalhes técnicos do Helix Gallery. Regras e decisões ficam no [`CLAUDE.md`](C
 
 ## Módulos
 ```
-app                      MainActivity, HelixApp (permissão + NavHost), MainTabs (Fotos/Álbuns/Busca + barra flutuante)
+app                      MainActivity, HelixApp (permissão + NavHost), MainTabs (Fotos/Álbuns + barra flutuante)
 features/photos          CollectionScreen: grade de uma origem (Todas, Álbum, Favoritas, Vídeos, Capturas, Lixeira), seleção e ações
 features/albums          AlbumsScreen: coleções prontas + pastas do aparelho
 features/viewer          ViewerScreen: carrossel (HorizontalPager), ZoomableImage, VideoPage (Media3), detalhes/EXIF
-features/search          SearchScreen: busca por nome, pasta, tipo, ano e mês
 features/settings        SettingsScreen, AboutScreen, UpdatePromptHost (aviso de versão nova)
 data/media               MediaRepository (MediaStore): lista, observador, pedidos de lixeira/apagar/favoritar
 data/updates             Consulta da última Release no GitHub, adiar/pular aviso
-core/model               Classes puras: MediaItem, MediaSource, AlbumSummary, GridEntry, searchMedia, UserPreferences
+core/model               Classes puras: MediaItem, MediaSource, AlbumSummary, GridEntry, UserPreferences
 core/common              navigateOnce/popBackStackOnce, permissões de mídia, compartilhar, abrir link
 core/datastore           PreferencesRepository (tema, cor dinâmica, layout e colunas)
 core/designsystem        HelixTheme, motion, componentes (grade, rolagem rápida, barra flutuante, Ajustes, logo, painel)

@@ -81,7 +81,6 @@ dependencies {
     implementation(project(":features:photos"))
     implementation(project(":features:albums"))
     implementation(project(":features:viewer"))
-    implementation(project(":features:search"))
     implementation(project(":features:settings"))
     implementation(project(":features:vault"))
     implementation(project(":features:cleanup"))

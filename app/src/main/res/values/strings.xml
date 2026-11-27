@@ -3,7 +3,6 @@
     <string name="app_name" translatable="false">Helix Gallery</string>
     <string name="tab_photos">Photos</string>
     <string name="tab_albums">Albums</string>
-    <string name="tab_search">Search</string>
     <string name="collection_favorites">Favorites</string>
     <string name="collection_videos">Videos</string>
     <string name="collection_screenshots">Screenshots</string>

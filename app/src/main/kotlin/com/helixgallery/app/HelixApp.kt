@@ -21,8 +21,6 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,7 +43,6 @@ import com.helixgallery.core.designsystem.component.LocalTabReselect
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import com.helixgallery.features.albums.AlbumsScreen
-import com.helixgallery.features.search.SearchScreen
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.animation.fadeIn
@@ -104,7 +101,6 @@ import com.helixgallery.features.viewer.ViewerScreen
 
 private const val ROUTE_PHOTOS = "tab/photos"
 private const val ROUTE_ALBUMS = "tab/albums"
-private const val ROUTE_SEARCH = "tab/search"
 private const val ROUTE_APPEARANCE = "settings/appearance"
 private const val ROUTE_GALLERY_SETTINGS = "settings/gallery"
 private const val ROUTE_SYSTEM = "settings/system"
@@ -168,10 +164,9 @@ private fun askManageMediaOnce(context: Context) {
 private enum class Tab(val route: String) {
     Photos(ROUTE_PHOTOS),
     Albums(ROUTE_ALBUMS),
-    Search(ROUTE_SEARCH),
 }
 
-/** Destino único das abas: um carrossel (HorizontalPager) com Fotos, Álbuns e Busca, que segue o dedo como os do BoomListener. */
+/** Destino único das abas: um carrossel (HorizontalPager) com Fotos e Álbuns, que segue o dedo como os do BoomListener. */
 private const val ROUTE_TABS = "tab/main"
 
 private val tabRoutes = setOf(ROUTE_TABS)
@@ -253,7 +248,6 @@ private fun HelixNavigation() {
     val navItems = listOf(
         HelixNavItem(stringResource(R.string.tab_photos), HelixIcons.Photo),
         HelixNavItem(stringResource(R.string.tab_albums), HelixIcons.Collections),
-        HelixNavItem(stringResource(R.string.tab_search), Icons.Filled.Search),
     )
     val barSpec: FiniteAnimationSpec<IntOffset> = helixSpatialSpec()
 
@@ -310,9 +304,6 @@ private fun HelixNavigation() {
                                 onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
                                 onOpenVault = { navController.navigateOnce(ROUTE_VAULT) },
                                 onOpenCleanup = { navController.navigateOnce(ROUTE_CLEANUP) },
-                            )
-                            Tab.Search -> SearchScreen(
-                                onOpen = { id -> navController.navigateOnce("viewer/${MediaSource.All.key}/$id") },
                             )
                         }
                     }

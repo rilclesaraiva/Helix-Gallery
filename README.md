@@ -9,7 +9,6 @@ A free, open-source photo and video gallery for Android, in Material 3 Expressiv
 - **Albums** from your device folders, plus favorites, videos, screenshots and trash (the Android system ones, shared with other gallery apps).
 - **Viewer** with swipe, pinch/double-tap zoom, video playback and details (EXIF).
 - **Select, share, favorite, trash and restore.**
-- **Search** by file name, folder, type, year or month.
 - Light, dark and AMOLED themes, optional wallpaper colors. English, Portuguese and Spanish.
 
 ### Planned

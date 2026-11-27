@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="search_hint">Buscar en tus fotos</string>
-    <string name="search_clear">Borrar</string>
-    <string name="search_tip">Busca por nombre de archivo, carpeta, tipo (foto, vídeo, gif), año o mes.</string>
-    <string name="search_none">Sin resultados.</string>
-</resources>
