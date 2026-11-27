@@ -8,3 +8,13 @@
 # mesmo jeito, mas um erro no celular mostra classe e linha de verdade.
 -dontobfuscate
 -keepattributes SourceFile,LineNumberTable
+
+# ML Kit (Copiar texto): ele monta os componentes internos por reflexão, lendo os registradores
+# (ComponentRegistrar) declarados no manifesto. Sem estas regras o R8 do release remove essas classes e
+# TextRecognition.getClient falha com NullPointerException (visto no aparelho).
+-keep class * implements com.google.firebase.components.ComponentRegistrar { *; }
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_text_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_text_bundled_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_common.** { *; }
