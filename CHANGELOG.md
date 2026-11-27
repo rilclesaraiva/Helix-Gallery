@@ -54,6 +54,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- The app crashed when the selection was cleared (by tapping the same period button or by any other way); fixed.
+- The bottom selection panel no longer leaves a gap under it while it slides up.
+- The details panel can now be dragged down from anywhere on it (when its content is at the top), not only from the handle.
 - The fast-scroll handle could not be seen or used while photos were selected; it now stays clear of the selection bars.
 - After leaving the app and coming back, the tabs could stay slightly shifted, showing a piece of the neighbouring tab; they now slide back into place.
 - Videos stop as soon as you leave them (they kept playing for a few seconds during the closing animation).

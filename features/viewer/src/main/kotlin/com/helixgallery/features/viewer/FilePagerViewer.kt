@@ -3,6 +3,7 @@
 
 package com.helixgallery.features.viewer
 
+import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import androidx.compose.foundation.background
 import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
@@ -93,8 +94,8 @@ fun FilePagerViewer(
             AnimatedVisibility(
                 visible = controlsVisible,
                 modifier = Modifier.align(Alignment.BottomCenter),
-                enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
-                exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+                enter = slideInVertically(helixScreenSpec()) { it } + fadeIn(helixEffectsSpec()),
+                exit = slideOutVertically(helixScreenSpec()) { it } + fadeOut(helixEffectsSpec()),
             ) {
                 HelixBottomActionBar(
                     primaryLabel = actions.primaryLabel,

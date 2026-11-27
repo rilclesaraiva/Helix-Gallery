@@ -3,6 +3,7 @@
 
 package com.helixgallery.features.photos
 
+import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import android.app.Activity
 import android.content.IntentSender
 import android.widget.Toast
@@ -280,8 +281,8 @@ fun CollectionScreen(
         AnimatedVisibility(
             visible = selecting && inTrash,
             modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
-            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+            enter = slideInVertically(helixScreenSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixScreenSpec()) { it } + fadeOut(helixEffectsSpec()),
         ) {
             HelixBottomActionBar(
                 primaryLabel = stringResource(R.string.photos_restore),
@@ -294,8 +295,8 @@ fun CollectionScreen(
         AnimatedVisibility(
             visible = selecting && !inTrash,
             modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
-            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+            enter = slideInVertically(helixScreenSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixScreenSpec()) { it } + fadeOut(helixEffectsSpec()),
         ) {
             HelixSelectionActionsBar(actions = selectionActions)
         }
@@ -317,7 +318,7 @@ fun CollectionScreen(
                 entries = entries,
                 columns = prefs.columns,
                 headerCount = 1,
-                modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = scrubTop, bottom = scrubBottom),
+                modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = scrubTop.coerceAtLeast(0.dp), bottom = scrubBottom.coerceAtLeast(0.dp)),
             )
         }
     }

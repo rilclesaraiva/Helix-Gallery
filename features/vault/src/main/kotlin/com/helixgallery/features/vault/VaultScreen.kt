@@ -3,6 +3,7 @@
 
 package com.helixgallery.features.vault
 
+import com.helixgallery.core.designsystem.theme.helixScreenSpec
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
@@ -307,8 +308,8 @@ fun VaultScreen(
         AnimatedVisibility(
             visible = selecting,
             modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
-            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+            enter = slideInVertically(helixScreenSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixScreenSpec()) { it } + fadeOut(helixEffectsSpec()),
         ) {
             HelixBottomActionBar(
                 primaryLabel = stringResource(R.string.vault_restore_short),

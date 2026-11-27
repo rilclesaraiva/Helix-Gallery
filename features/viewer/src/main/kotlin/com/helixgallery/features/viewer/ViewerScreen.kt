@@ -36,6 +36,10 @@ import com.helixgallery.core.designsystem.component.HelixSmartSheet
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.AlbumSummary
 import android.widget.Toast
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.graphics.graphicsLayer
@@ -202,6 +206,42 @@ private fun ViewerContent(
         val id = current.id
         launch(viewModel.repository.favoriteRequest(listOf(current.uri), target)) { favoriteOverride.remove(id) }
     }
+    var detailsPanelPx by remember { mutableFloatStateOf(1f) }
+    var detailsViewportPx by remember { mutableFloatStateOf(0f) }
+    fun dragDetails(dy: Float) {
+        detailsJob?.cancel()
+        detailsProgress = (detailsProgress - dy / detailsPanelPx).coerceIn(0f, 1f)
+    }
+    fun endDetails(velocityY: Float) = settleDetails(velocityY < -800f || (velocityY <= 800f && detailsProgress > 0.4f))
+    // Dentro do painel, o conteúdo rola; ao chegar no topo, continuar puxando para baixo fecha o painel.
+    var nestedDragging by remember { mutableStateOf(false) }
+    val panelNested = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (source == NestedScrollSource.UserInput && nestedDragging && available.y < 0f && detailsProgress < 1f) {
+                    dragDetails(available.y)
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (source == NestedScrollSource.UserInput && available.y > 0f && details) {
+                    nestedDragging = true
+                    dragDetails(available.y)
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (!nestedDragging) return Velocity.Zero
+                nestedDragging = false
+                endDetails(available.y)
+                return available
+            }
+        }
+    }
     fun showDetails() {
         viewModel.loadExif(current.uri, current.isVideo)
         settleDetails(true)
@@ -220,14 +260,12 @@ private fun ViewerContent(
         HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails),
     )
 
-    var detailsPanelPx by remember { mutableFloatStateOf(1f) }
-    var detailsViewportPx by remember { mutableFloatStateOf(0f) }
     BoxWithConstraints(
         Modifier.fillMaxSize().detailsDrag(
             enabled = { !zoomed && (details || currentItems.getOrNull(pagerState.currentPage)?.isVideo != true) },
             progress = { detailsProgress },
-            onDrag = { dy -> detailsJob?.cancel(); detailsProgress = (detailsProgress - dy / detailsPanelPx).coerceIn(0f, 1f) },
-            onEnd = { velocity -> settleDetails(velocity < -800f || (velocity <= 800f && detailsProgress > 0.4f)) },
+            onDrag = ::dragDetails,
+            onEnd = ::endDetails,
             skipStart = { pos -> detailsProgress > 0f && pos.y >= detailsViewportPx - detailsProgress * detailsPanelPx },
         ),
     ) {
@@ -368,8 +406,8 @@ private fun ViewerContent(
                         .detailsDrag(
                             enabled = { true },
                             progress = { detailsProgress },
-                            onDrag = { dy -> detailsJob?.cancel(); detailsProgress = (detailsProgress - dy / detailsPanelPx).coerceIn(0f, 1f) },
-                            onEnd = { velocity -> settleDetails(velocity < -800f || (velocity <= 800f && detailsProgress > 0.4f)) },
+                            onDrag = ::dragDetails,
+                            onEnd = ::endDetails,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -381,7 +419,7 @@ private fun ViewerContent(
                             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
                     )
                 }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+                Column(Modifier.weight(1f).nestedScroll(panelNested).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
                     DetailsContent(item = current, viewModel = viewModel)
                 }
             }
