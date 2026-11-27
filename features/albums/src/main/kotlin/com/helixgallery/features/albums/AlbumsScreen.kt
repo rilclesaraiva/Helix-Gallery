@@ -50,7 +50,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -67,11 +69,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.HelixImage
 import com.helixgallery.core.designsystem.component.HelixLoading
-import com.helixgallery.core.designsystem.component.HelixPageTitle
 import com.helixgallery.core.designsystem.component.HelixFloatingActions
 import com.helixgallery.core.designsystem.component.HelixFloatingCircle
 import com.helixgallery.core.designsystem.component.HelixStatusBarScrim
-import com.helixgallery.core.designsystem.component.helixActionsInset
 import com.helixgallery.core.model.MediaSource
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.isScreenshot
@@ -97,7 +97,8 @@ fun AlbumsScreen(
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxSize()) {
         val titleRow: @Composable () -> Unit = {
-            HelixPageTitle(title = stringResource(R.string.albums_title), actionsInset = helixActionsInset(1))
+            // Sem título: só a faixa livre para a barra de status e o atalho dos Ajustes.
+            Spacer(Modifier.statusBarsPadding().height(64.dp))
         }
         if (!state.loaded) {
             titleRow()

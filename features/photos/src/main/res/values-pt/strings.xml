@@ -42,4 +42,14 @@
     </plurals>
     <string name="photos_lock_failed">Não deu para trancar no cofre</string>
     <string name="photos_delete_trash">Excluir</string>
+    <string name="photos_story_on_this_day">Neste dia</string>
+    <string name="photos_story_favorites">Favoritas</string>
+    <plurals name="photos_story_years_ago">
+        <item quantity="one">há %d ano</item>
+        <item quantity="other">há %d anos</item>
+    </plurals>
+    <plurals name="photos_story_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d itens</item>
+    </plurals>
 </resources>

@@ -42,4 +42,14 @@
     </plurals>
     <string name="photos_lock_failed">Couldn\'t lock it in the vault</string>
     <string name="photos_delete_trash">Delete</string>
+    <string name="photos_story_on_this_day">On this day</string>
+    <string name="photos_story_favorites">Favorites</string>
+    <plurals name="photos_story_years_ago">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
+    <plurals name="photos_story_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
 </resources>

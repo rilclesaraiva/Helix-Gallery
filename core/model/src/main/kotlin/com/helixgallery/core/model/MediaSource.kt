@@ -31,6 +31,11 @@ sealed interface MediaSource {
         override val key = "screenshots"
     }
 
+    /** Um dia só (contado desde 1970): as fotos tiradas nele, como as "neste dia" das lembranças. */
+    data class Day(val epochDay: Long) : MediaSource {
+        override val key = "day_$epochDay"
+    }
+
     data object Trash : MediaSource {
         override val key = "trash"
     }
@@ -43,6 +48,7 @@ sealed interface MediaSource {
             key == Videos.key -> Videos
             key == Screenshots.key -> Screenshots
             key == Trash.key -> Trash
+            key.startsWith("day_") -> key.removePrefix("day_").toLongOrNull()?.let(::Day) ?: All
             key.startsWith("album_") -> key.removePrefix("album_").toLongOrNull()?.let(::Album) ?: All
             else -> All
         }
@@ -62,5 +68,6 @@ fun selectMedia(source: MediaSource, state: MediaState): List<MediaItem> = when 
     MediaSource.Favorites -> state.items.filter { it.isFavorite }
     MediaSource.Videos -> state.items.filter { it.isVideo }
     MediaSource.Screenshots -> state.items.filter { it.isScreenshot() }
+    is MediaSource.Day -> state.items.filter { it.epochDay() == source.epochDay }
     MediaSource.Trash -> state.trashed
 }

@@ -299,6 +299,7 @@ private fun HelixNavigation() {
                                 onOpenSettings = { navController.navigateOnce(ROUTE_SETTINGS) },
                                 bottomInset = true,
                                 reselectTab = ROUTE_PHOTOS,
+                                onOpenStory = { src -> navController.navigateOnce("collection/${src.key}") },
                                 onMoveToVault = { items ->
                                     pendingVault = items
                                     navController.navigateOnce(ROUTE_VAULT)
@@ -444,6 +445,14 @@ private fun collectionTitle(source: MediaSource): String? = when (source) {
     MediaSource.Trash -> stringResource(R.string.collection_trash)
     MediaSource.All -> stringResource(R.string.tab_photos)
     is MediaSource.Album -> null
+    is MediaSource.Day -> dayTitle(source.epochDay)
+}
+
+@Composable
+private fun dayTitle(epochDay: Long): String {
+    val locale = java.util.Locale.getDefault()
+    val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "yMMMMd")
+    return java.time.LocalDate.ofEpochDay(epochDay).format(java.time.format.DateTimeFormatter.ofPattern(pattern, locale))
 }
 
 @Composable

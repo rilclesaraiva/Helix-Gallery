@@ -18,6 +18,7 @@ class MediaSourceTest {
             MediaSource.Screenshots,
             MediaSource.Trash,
             MediaSource.Album(42),
+            MediaSource.Day(20_000),
         ).forEach { assertEquals(it, MediaSource.parse(it.key)) }
     }
 

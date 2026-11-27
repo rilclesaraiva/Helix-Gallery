@@ -5,8 +5,11 @@ All notable changes to **Helix Gallery** are recorded here, by version. This fil
 Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) — `MAJOR.MINOR.PATCH`.
 
 ## [Unreleased]
+### Added
+- Photos tab now opens with a row of story-style memory cards: "On this day" (years ago), quick albums (the folders you used most recently) and Favorites. Everything is built from dates and folders already on the device; nothing is analysed. Tapping a card opens that day or album.
 
 ### Changed
+- The Photos and Albums tabs no longer show a title at the top; the Settings button stays in the corner.
 - Photo details now slide up from the bottom pushing the photo up with them (like Google Photos), following your finger; drag down, tap the photo or go back to close.
 - Pulling a photo up no longer opens the details while also switching to another photo: each gesture picks one direction at the start.
 - The period select button on date titles is smaller, fainter and a bit farther from the fast-scroll handle.

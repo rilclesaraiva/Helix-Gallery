@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import java.time.LocalDate
+import com.helixgallery.core.model.buildStories
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -92,7 +96,8 @@ import com.helixgallery.core.model.selectMedia
  *
  * @param onOpen abre o visualizador na foto tocada, dentro da mesma lista.
  * @param onBack só nas telas de dentro (álbum, coleção); a aba Fotos não tem.
- * @param onOpenSettings só na aba Fotos: o atalho dos Ajustes ao lado do título.
+ * @param onOpenSettings só na aba Fotos: o atalho dos Ajustes (a aba não tem título; no lugar vão as lembranças).
+ * @param onOpenStory só na aba Fotos: abre a lista de um cartão de lembrança.
  * @param bottomInset espaço para a barra flutuante, quando ela está por cima.
  */
 @Composable
@@ -106,6 +111,7 @@ fun CollectionScreen(
     bottomInset: Boolean = false,
     reselectTab: String? = null,
     onMoveToVault: ((List<MediaItem>) -> Unit)? = null,
+    onOpenStory: ((MediaSource) -> Unit)? = null,
     viewModel: CollectionViewModel = viewModel(key = "collection_${source.key}"),
 ) {
     val context = LocalContext.current
@@ -132,15 +138,27 @@ fun CollectionScreen(
     // O app confirma antes de apagar (no lugar da caixa do sistema).
     var confirm by remember { mutableStateOf<Confirm?>(null) }
 
+    // A aba Fotos não tem título: no topo ficam a faixa dos Ajustes e a fileira de lembranças.
+    val isTab = onBack == null && onOpenSettings != null
+    val stories = remember(mediaState.items, isTab) {
+        if (isTab && onOpenStory != null) buildStories(mediaState.items, LocalDate.now()) else emptyList()
+    }
     val titleRow: @Composable () -> Unit = {
         Box(Modifier.recedeWhileSelecting(selecting)) {
-            HelixPageTitle(
-                title = pageTitle,
-                hasBack = onBack != null,
-                actionsInset = helixActionsInset(
-                    (if (onOpenSettings != null) 1 else 0) + (if (inTrash && items.isNotEmpty()) 1 else 0),
-                ),
-            )
+            if (isTab) {
+                Column(Modifier.statusBarsPadding()) {
+                    Spacer(Modifier.height(64.dp))
+                    if (stories.isNotEmpty() && onOpenStory != null) StoriesRow(stories, onOpenStory)
+                }
+            } else {
+                HelixPageTitle(
+                    title = pageTitle,
+                    hasBack = onBack != null,
+                    actionsInset = helixActionsInset(
+                        (if (onOpenSettings != null) 1 else 0) + (if (inTrash && items.isNotEmpty()) 1 else 0),
+                    ),
+                )
+            }
         }
     }
     val selectionActions = buildList {
