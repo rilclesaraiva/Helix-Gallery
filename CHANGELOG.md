@@ -54,6 +54,8 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- Tapping the open tab to scroll back to the top could stop working after being used many times; it now keeps working.
+- Scrolling to the top no longer stutters on the way: it jumps close to the top and animates the rest in one smooth move.
 - Photo details showed no camera data when opened by pulling the photo up, and could show the data of another photo; they now always show the data of the photo on screen.
 - The details panel is only as tall as its content, with no empty space below.
 - The app crashed when the selection was cleared (by tapping the same period button or by any other way); fixed.
