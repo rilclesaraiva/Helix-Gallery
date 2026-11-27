@@ -318,7 +318,8 @@ private fun PeriodCheck(checked: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-
+            .clickable(onClick = onClick),
+    ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(24.dp).clip(CircleShape).background(fill).border(2.dp, line, CircleShape),
