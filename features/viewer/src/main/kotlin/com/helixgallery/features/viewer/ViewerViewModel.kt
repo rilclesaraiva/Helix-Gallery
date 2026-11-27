@@ -16,6 +16,7 @@ import com.helixgallery.data.media.MediaWriterData
 import com.helixgallery.data.vault.VaultData
 import com.helixgallery.data.vault.VaultSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+/** O EXIF lido de [uri] (null em [info] = a foto não tem ou não foi possível ler). */
+data class ExifResult(val uri: String, val info: ExifInfo?)
 
 /** Dados da câmera lidos do próprio arquivo (EXIF). Campos que a foto não tem ficam nulos. */
 data class ExifInfo(
@@ -73,15 +77,19 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private val _exif = MutableStateFlow<ExifInfo?>(null)
-    val exif: StateFlow<ExifInfo?> = _exif.asStateFlow()
+    private val _exif = MutableStateFlow<ExifResult?>(null)
+    val exif: StateFlow<ExifResult?> = _exif.asStateFlow()
+    private var exifJob: Job? = null
 
     /** Lê o EXIF da foto aberta nos detalhes (vídeos não têm). */
     fun loadExif(uri: String, isVideo: Boolean) {
+        // Uma leitura por vez e sempre ligada à foto de que veio: o resultado de uma foto nunca aparece em outra.
+        exifJob?.cancel()
         _exif.value = null
         if (isVideo) return
-        viewModelScope.launch {
-            _exif.value = withContext(Dispatchers.IO) { readExif(uri) }
+        exifJob = viewModelScope.launch {
+            val info = withContext(Dispatchers.IO) { readExif(uri) }
+            _exif.value = ExifResult(uri, info)
         }
     }
 

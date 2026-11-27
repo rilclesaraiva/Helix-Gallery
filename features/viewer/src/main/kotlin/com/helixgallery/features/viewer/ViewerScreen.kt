@@ -36,6 +36,8 @@ import com.helixgallery.core.designsystem.component.HelixSmartSheet
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.AlbumSummary
 import android.widget.Toast
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -243,12 +245,13 @@ private fun ViewerContent(
         }
     }
     fun showDetails() {
-        viewModel.loadExif(current.uri, current.isVideo)
         settleDetails(true)
     }
     BackHandler(enabled = details) { settleDetails(false) }
-    // Trocando de foto com os detalhes abertos, eles passam a mostrar a nova.
-    LaunchedEffect(current.id) { if (details) viewModel.loadExif(current.uri, current.isVideo) }
+    // Os dados da câmera são lidos sempre que os detalhes aparecem (por menu ou puxando) e a cada troca de foto
+    // com eles abertos. Antes só o menu lia: puxando, ficava sem dados ou com os da foto anterior.
+    val detailsVisible by remember { derivedStateOf { detailsProgress > 0f } }
+    LaunchedEffect(detailsVisible, current.id) { if (detailsVisible) viewModel.loadExif(current.uri, current.isVideo) }
     val chromeShown by remember { derivedStateOf { chrome && detailsProgress < 0.05f } }
     val currentItems by rememberUpdatedState(items)
 
@@ -270,8 +273,10 @@ private fun ViewerContent(
         ),
     ) {
         val density = LocalDensity.current
-        val panelHeight = maxHeight * DETAILS_PANEL_FRACTION
-        val panelPx = with(density) { panelHeight.toPx() }
+        val maxPanelHeight = maxHeight * DETAILS_PANEL_FRACTION
+        // O painel tem a altura do conteúdo (até o máximo): sem espaço vazio embaixo.
+        var measuredPanelPx by remember { mutableFloatStateOf(0f) }
+        val panelPx = if (measuredPanelPx > 0f) measuredPanelPx else with(density) { maxPanelHeight.toPx() }
         detailsPanelPx = panelPx
         detailsViewportPx = with(density) { maxHeight.toPx() }
         HorizontalPager(
@@ -394,10 +399,11 @@ private fun ViewerContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(panelHeight)
+                .heightIn(max = maxPanelHeight)
+                .onSizeChanged { measuredPanelPx = it.height.toFloat() }
                 .graphicsLayer { translationY = (1f - detailsProgress) * panelPx },
         ) {
-            Column(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxWidth()) {
                 // Puxador: arrastar para baixo fecha.
                 Box(
                     Modifier
@@ -419,7 +425,7 @@ private fun ViewerContent(
                             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
                     )
                 }
-                Column(Modifier.weight(1f).nestedScroll(panelNested).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+                Column(Modifier.weight(1f, fill = false).nestedScroll(panelNested).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
                     DetailsContent(item = current, viewModel = viewModel)
                 }
             }
@@ -554,7 +560,8 @@ private fun LabeledBarButton(
 @Composable
 private fun DetailsContent(item: MediaItem, viewModel: ViewerViewModel) {
     val context = LocalContext.current
-    val exif by viewModel.exif.collectAsStateWithLifecycle()
+    val exifResult by viewModel.exif.collectAsStateWithLifecycle()
+    val exif = exifResult?.takeIf { it.uri == item.uri }?.info
     Column(Modifier.padding(bottom = 24.dp)) {
         Text(
             text = stringResource(R.string.details_title),
