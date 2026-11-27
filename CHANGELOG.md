@@ -6,7 +6,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 ### Added
-- "Copy text" in the photo viewer's menu: reads the text in a photo (such as a screenshot) on your device, shows it so you can select a part, and copies it all with one tap. Lines of the same paragraph are joined so sentences are not broken in the middle; a second button copies the text with the original line breaks. It works offline, nothing is saved or sent anywhere. The app now ships for 64-bit ARM (arm64-v8a) devices only, and the APK is about 4 MB larger because of the text recognition model.
+- "Copy text" in the photo viewer's menu: reads the text in a photo (such as a screenshot) on your device, shows it so you can select a part, and copies it all with one tap. Lines of the same paragraph are joined so sentences are not broken in the middle; a second button copies the text with the original line breaks. When the first reading is empty or uncertain, or the photo is dark, it also reads a colour-inverted copy and keeps the more confident result (helps with light text on dark backgrounds). It works offline, nothing is saved or sent anywhere. The app now ships for 64-bit ARM (arm64-v8a) devices only, and the APK is about 4 MB larger because of the text recognition model.
 - Photos tab now opens with a row of story-style memory cards: "On this day" (years ago), quick albums (the folders with your newest photos) and Favorites. Everything is built from dates and folders already on the device; nothing is analysed. Tapping a card opens that day or album.
 
 ### Changed

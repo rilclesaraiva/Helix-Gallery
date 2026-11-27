@@ -4,16 +4,24 @@
 package com.helixgallery.data.media
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.ImageDecoder
+import android.graphics.Paint
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /** Lê o texto que aparece numa imagem, no próprio aparelho (nada sai dele). */
 interface TextReader {
@@ -52,6 +60,61 @@ internal fun sampleSizeFor(width: Int, height: Int, maxSide: Int = 2048): Int {
     return sample
 }
 
+/** Uma leitura de uma variante da imagem: o texto e o quanto o reconhecedor confiou nele ([mass] = soma de confiança × letras). */
+internal data class OcrPass(val flowed: String, val original: String, val mass: Float, val chars: Int) {
+    val averageConfidence: Float get() = if (chars == 0) 0f else mass / chars
+}
+
+/** Fundo escuro: a segunda passada (cores invertidas) tem mais chance de ajudar. */
+internal const val DARK_LUMINANCE = 0.4f
+
+/** Abaixo disto a confiança média da leitura original é considerada baixa. */
+internal const val LOW_CONFIDENCE = 0.85f
+
+/** Só gasta a passada invertida quando a original veio vazia, pouco confiante ou de imagem escura. */
+internal fun shouldTryInverted(first: OcrPass, luminance: Float): Boolean =
+    first.chars == 0 || first.averageConfidence < LOW_CONFIDENCE || luminance < DARK_LUMINANCE
+
+/** Fica com a leitura de maior "massa de confiança"; em empate vale a original. */
+internal fun pickBetter(original: OcrPass, inverted: OcrPass): OcrPass =
+    if (inverted.mass > original.mass) inverted else original
+
+/** Luminância média (0 a 1) de [bitmap], medida numa miniatura. */
+private fun averageLuminance(bitmap: Bitmap): Float {
+    val small = Bitmap.createScaledBitmap(bitmap, 32, 32, true)
+    val pixels = IntArray(32 * 32)
+    small.getPixels(pixels, 0, 32, 0, 0, 32, 32)
+    if (small !== bitmap) small.recycle()
+    val sum = pixels.sumOf { (0.299 * Color.red(it) + 0.587 * Color.green(it) + 0.114 * Color.blue(it)) }
+    return (sum / pixels.size / 255.0).toFloat()
+}
+
+/** Cópia com as cores invertidas (texto claro em fundo escuro vira escuro em fundo claro). */
+private fun invert(bitmap: Bitmap): Bitmap {
+    val out = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+    val matrix = ColorMatrix(
+        floatArrayOf(
+            -1f, 0f, 0f, 0f, 255f,
+            0f, -1f, 0f, 0f, 255f,
+            0f, 0f, -1f, 0f, 255f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+    Canvas(out).drawBitmap(bitmap, 0f, 0f, Paint().apply { colorFilter = ColorMatrixColorFilter(matrix) })
+    return out
+}
+
+private suspend fun TextRecognizer.recognize(bitmap: Bitmap): OcrPass = suspendCancellableCoroutine { cont ->
+    process(InputImage.fromBitmap(bitmap, 0))
+        .addOnSuccessListener { result ->
+            val lines = result.textBlocks.flatMap { it.lines }
+            val chars = lines.sumOf { it.text.length }
+            val mass = lines.sumOf { (it.confidence * it.text.length).toDouble() }.toFloat()
+            cont.resume(OcrPass(flowText(result.textBlocks.map { block -> block.lines.map { it.text } }), result.text, mass, chars))
+        }
+        .addOnFailureListener { error -> cont.resumeWithException(error) }
+}
+
 private class MlKitTextReader(private val context: Context) : TextReader {
     override suspend fun read(uri: String): TextReadResult = withContext(Dispatchers.Default) {
         // Qualquer erro (inclusive de código nativo ou de classe ausente) vira falha mostrada ao usuário, nunca crash.
@@ -64,11 +127,22 @@ private class MlKitTextReader(private val context: Context) : TextReader {
             // Modelo latino (português, espanhol, inglês…), embutido no app: funciona sem rede.
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
             try {
-                suspendCancellableCoroutine<TextReadResult> { cont ->
-                    recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                        .addOnSuccessListener { result -> cont.resume(TextReadResult.Text(flowText(result.textBlocks.map { block -> block.lines.map { it.text } }), result.text)) }
-                        .addOnFailureListener { error -> cont.resume(TextReadResult.Failure(error.detail())) }
+                val first = recognizer.recognize(bitmap)
+                var best = first
+                if (shouldTryInverted(first, averageLuminance(bitmap))) {
+                    // Uma variante por vez: o bitmap invertido é liberado antes de qualquer outra coisa.
+                    val inverted = invert(bitmap)
+                    try {
+                        best = pickBetter(first, recognizer.recognize(inverted))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // A segunda passada é só um reforço: se falhar, vale a leitura original.
+                    } finally {
+                        inverted.recycle()
+                    }
                 }
+                TextReadResult.Text(best.flowed, best.original)
             } finally {
                 recognizer.close()
             }
