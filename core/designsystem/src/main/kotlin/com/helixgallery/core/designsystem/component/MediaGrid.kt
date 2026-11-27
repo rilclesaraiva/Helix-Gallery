@@ -449,8 +449,9 @@ fun formatDuration(ms: Long): String {
 }
 
 /**
- * Cantos arredondados só nos cantos de fora da grade: os de cima na primeira linha, os de baixo na última
- * (na última, incompleta, a última foto leva o canto da direita). [index] < 0 = sem arredondar.
+ * Cantos arredondados só nos cantos que estão mesmo nos extremos da grade: os de cima na primeira linha, os de baixo
+ * na última, e só na primeira e na última coluna (numa última linha incompleta, o vazio ao lado não é extremo, então
+ * o canto da direita da última foto fica reto). [index] < 0 = sem arredondar.
  */
 private fun endCorners(base: CornerBasedShape, index: Int, count: Int, columns: Int): Shape? {
     if (index < 0 || columns < 1) return null
@@ -458,7 +459,7 @@ private fun endCorners(base: CornerBasedShape, index: Int, count: Int, columns: 
     val first = index < columns
     val last = index >= (count - 1) / columns * columns
     val start = col == 0
-    val end = col == columns - 1 || index == count - 1
+    val end = col == columns - 1
     val zero = CornerSize(0.dp)
     return base.copy(
         topStart = if (first && start) base.topStart else zero,

@@ -58,6 +58,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
 import com.helixgallery.core.designsystem.component.dragSelect
 import androidx.compose.runtime.rememberUpdatedState
@@ -421,8 +427,21 @@ private fun PasswordField(
 /** Tela de senha no estilo do Babel-Manager: círculo com cadeado, título, dica e os campos, no centro. */
 @Composable
 private fun LockLayout(title: String, hint: String, content: @Composable () -> Unit) {
+    val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    // Fechar o teclado (voltar, por exemplo) tira o foco do campo: o cursor para de piscar.
+    LaunchedEffect(Unit) {
+        var wasVisible = false
+        snapshotFlow { WindowInsets.ime.getBottom(density) > 0 }.collect { visible ->
+            if (wasVisible && !visible) focusManager.clearFocus()
+            wasVisible = visible
+        }
+    }
     Box(
-        Modifier.fillMaxSize().imePadding().navigationBarsPadding(),
+        Modifier.fillMaxSize()
+            // Tocar fora do campo (e fora de botões, que consomem o toque) tira o foco e fecha o teclado.
+            .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+            .imePadding().navigationBarsPadding(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
