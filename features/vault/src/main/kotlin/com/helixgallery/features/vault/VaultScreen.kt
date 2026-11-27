@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -429,10 +430,11 @@ private fun PasswordField(
 private fun LockLayout(title: String, hint: String, content: @Composable () -> Unit) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
     // Fechar o teclado (voltar, por exemplo) tira o foco do campo: o cursor para de piscar.
     LaunchedEffect(Unit) {
         var wasVisible = false
-        snapshotFlow { WindowInsets.ime.getBottom(density) > 0 }.collect { visible ->
+        snapshotFlow { imeInsets.getBottom(density) > 0 }.collect { visible ->
             if (wasVisible && !visible) focusManager.clearFocus()
             wasVisible = visible
         }
