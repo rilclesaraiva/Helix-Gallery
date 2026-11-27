@@ -47,7 +47,6 @@ fun ZoomableImage(
     onTap: () -> Unit,
     onZoomChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    onSwipeUp: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var zoomJob by remember { mutableStateOf<Job?>(null) }
@@ -95,25 +94,6 @@ fun ZoomableImage(
                         }
                     },
                 )
-            }
-            .pointerInput(onSwipeUp) {
-                // Puxar para cima (sem zoom, um dedo só) abre os detalhes; não consome, o carrossel segue livre.
-                if (onSwipeUp == null) return@pointerInput
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    var dx = 0f
-                    var dy = 0f
-                    var single = true
-                    do {
-                        val event = awaitPointerEvent()
-                        if (event.changes.size > 1) single = false
-                        event.changes.firstOrNull()?.let {
-                            dx += it.positionChange().x
-                            dy += it.positionChange().y
-                        }
-                    } while (event.changes.any { it.pressed })
-                    if (single && scale <= 1.01f && dy < -viewConfiguration.touchSlop * 6 && -dy > abs(dx) * 2f) onSwipeUp()
-                }
             }
             .pointerInput(Unit) {
                 awaitEachGesture {

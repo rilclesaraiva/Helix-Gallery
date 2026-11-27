@@ -262,7 +262,7 @@ fun MediaGrid(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec)
-                            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 0.dp),
+                            .padding(start = 16.dp, end = 28.dp, top = 12.dp, bottom = 0.dp),
                     ) {
                         Text(
                             text = rememberHeaderText(entry),
@@ -309,7 +309,7 @@ private fun PeriodCheck(checked: Boolean, onClick: () -> Unit) {
         label = "periodFill",
     )
     val line by animateColorAsState(
-        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
         helixEffectsSpec(),
         label = "periodLine",
     )
@@ -322,13 +322,13 @@ private fun PeriodCheck(checked: Boolean, onClick: () -> Unit) {
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(24.dp).clip(CircleShape).background(fill).border(2.dp, line, CircleShape),
+            modifier = Modifier.size(20.dp).clip(CircleShape).background(fill).border(1.5.dp, line, CircleShape),
         ) {
             Icon(
                 Icons.Filled.Check,
                 contentDescription = stringResource(R.string.ds_select_period),
                 tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (checked) 1f else 0f),
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(14.dp),
             )
         }
     }

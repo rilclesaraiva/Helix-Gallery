@@ -36,6 +36,29 @@ import com.helixgallery.core.designsystem.component.HelixSmartSheet
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.AlbumSummary
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.core.animate
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import kotlin.math.abs
+import kotlin.math.hypot
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Brush
@@ -132,7 +155,20 @@ private fun ViewerContent(
     )
     var chrome by remember { mutableStateOf(true) }
     var zoomed by remember { mutableStateOf(false) }
+    // Detalhes: painel que sobe empurrando a foto junto (como no Google Fotos). [detailsProgress] 0 = fechado, 1 = aberto;
+    // acompanha o dedo ao puxar e anima com a mola do tema ao soltar. [details] é o destino (aberto/fechado).
     var details by remember { mutableStateOf(false) }
+    var detailsProgress by remember { mutableFloatStateOf(0f) }
+    var detailsJob by remember { mutableStateOf<Job?>(null) }
+    val detailsScope = rememberCoroutineScope()
+    val detailsSpec = helixSpatialSpec<Float>()
+    fun settleDetails(open: Boolean) {
+        details = open
+        detailsJob?.cancel()
+        detailsJob = detailsScope.launch {
+            animate(detailsProgress, if (open) 1f else 0f, animationSpec = detailsSpec) { value, _ -> detailsProgress = value }
+        }
+    }
     var addTo by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
     val inTrash = source == MediaSource.Trash
@@ -168,8 +204,14 @@ private fun ViewerContent(
     }
     fun showDetails() {
         viewModel.loadExif(current.uri, current.isVideo)
-        details = true
+        settleDetails(true)
     }
+    BackHandler(enabled = details) { settleDetails(false) }
+    // Trocando de foto com os detalhes abertos, eles passam a mostrar a nova.
+    LaunchedEffect(current.id) { if (details) viewModel.loadExif(current.uri, current.isVideo) }
+    val chromeShown by remember { derivedStateOf { chrome && detailsProgress < 0.05f } }
+    val currentItems by rememberUpdatedState(items)
+
     fun trashOrRestore() = launch(viewModel.repository.trashRequest(listOf(current.uri), !inTrash))
     fun deleteForever() = launch(viewModel.repository.deleteRequest(listOf(current.uri)))
 
@@ -178,12 +220,27 @@ private fun ViewerContent(
         HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails),
     )
 
-    Box(Modifier.fillMaxSize()) {
+    var detailsPanelPx by remember { mutableFloatStateOf(1f) }
+    var detailsViewportPx by remember { mutableFloatStateOf(0f) }
+    BoxWithConstraints(
+        Modifier.fillMaxSize().detailsDrag(
+            enabled = { !zoomed && (details || currentItems.getOrNull(pagerState.currentPage)?.isVideo != true) },
+            progress = { detailsProgress },
+            onDrag = { dy -> detailsJob?.cancel(); detailsProgress = (detailsProgress - dy / detailsPanelPx).coerceIn(0f, 1f) },
+            onEnd = { velocity -> settleDetails(velocity < -800f || (velocity <= 800f && detailsProgress > 0.4f)) },
+            skipStart = { pos -> detailsProgress > 0f && pos.y >= detailsViewportPx - detailsProgress * detailsPanelPx },
+        ),
+    ) {
+        val density = LocalDensity.current
+        val panelHeight = maxHeight * DETAILS_PANEL_FRACTION
+        val panelPx = with(density) { panelHeight.toPx() }
+        detailsPanelPx = panelPx
+        detailsViewportPx = with(density) { maxHeight.toPx() }
         HorizontalPager(
             state = pagerState,
             userScrollEnabled = !zoomed,
             key = { index -> items[index.coerceIn(0, items.lastIndex)].id },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().graphicsLayer { translationY = -detailsProgress * panelPx * 0.5f },
         ) { page ->
             val item = items[page.coerceIn(0, items.lastIndex)]
             if (item.isVideo) {
@@ -191,21 +248,20 @@ private fun ViewerContent(
                     uri = item.uri,
                     isCurrent = page == pagerState.currentPage,
                     controlsVisible = chrome,
-                    onTap = { chrome = !chrome },
+                    onTap = { if (details) settleDetails(false) else chrome = !chrome },
                 )
             } else {
                 ZoomableImage(
                     uri = item.uri,
-                    onTap = { chrome = !chrome },
+                    onTap = { if (details) settleDetails(false) else chrome = !chrome },
                     onZoomChanged = { if (page == pagerState.currentPage) zoomed = it },
-                    onSwipeUp = { if (page == pagerState.currentPage) showDetails() },
                 )
             }
         }
 
         // Nada de barra presa no topo: botões redondos translúcidos flutuam sobre a foto.
         AnimatedVisibility(
-            visible = chrome,
+            visible = chromeShown,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter),
@@ -248,7 +304,7 @@ private fun ViewerContent(
         }
 
         AnimatedVisibility(
-            visible = chrome,
+            visible = chromeShown,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -289,6 +345,44 @@ private fun ViewerContent(
                             }
                         }
                     }
+                }
+            }
+        }
+        // Painel de detalhes: sobe de baixo junto com a foto (que sobe pela metade da altura dele).
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shape = MaterialTheme.shapes.extraLarge.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(panelHeight)
+                .graphicsLayer { translationY = (1f - detailsProgress) * panelPx },
+        ) {
+            Column(Modifier.fillMaxSize()) {
+                // Puxador: arrastar para baixo fecha.
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                        .detailsDrag(
+                            enabled = { true },
+                            progress = { detailsProgress },
+                            onDrag = { dy -> detailsJob?.cancel(); detailsProgress = (detailsProgress - dy / detailsPanelPx).coerceIn(0f, 1f) },
+                            onEnd = { velocity -> settleDetails(velocity < -800f || (velocity <= 800f && detailsProgress > 0.4f)) },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier
+                            .width(32.dp)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
+                    )
+                }
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+                    DetailsContent(item = current, viewModel = viewModel)
                 }
             }
         }
@@ -336,9 +430,6 @@ private fun ViewerContent(
         )
     }
 
-    if (details) {
-        DetailsSheet(item = current, viewModel = viewModel, onDismiss = { details = false })
-    }
 }
 
 private enum class ViewerConfirm { Trash, DeleteForever }
@@ -423,10 +514,10 @@ private fun LabeledBarButton(
 }
 
 @Composable
-private fun DetailsSheet(item: MediaItem, viewModel: ViewerViewModel, onDismiss: () -> Unit) {
+private fun DetailsContent(item: MediaItem, viewModel: ViewerViewModel) {
     val context = LocalContext.current
     val exif by viewModel.exif.collectAsStateWithLifecycle()
-    HelixModalSheet(onDismiss = onDismiss) {
+    Column(Modifier.padding(bottom = 24.dp)) {
         Text(
             text = stringResource(R.string.details_title),
             style = MaterialTheme.typography.titleLarge,
@@ -471,3 +562,51 @@ private fun formatDate(ms: Long): String =
 private fun formatDateTime(ms: Long): String =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
         .format(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()))
+
+private const val DETAILS_PANEL_FRACTION = 0.58f
+
+/**
+ * Puxar para cima abre os detalhes e puxar para baixo fecha, acompanhando o dedo. O eixo é decidido uma vez só,
+ * no começo do gesto: se for mais vertical (e para cima, quando fechado), este gesto fica com ele e o carrossel
+ * não recebe nada; se for mais horizontal, nada aqui, e só o carrossel troca de foto. Assim os dois nunca disputam.
+ * [skipStart] diz onde um toque NÃO começa o gesto (dentro do painel, que rola sozinho).
+ */
+private fun Modifier.detailsDrag(
+    enabled: () -> Boolean,
+    progress: () -> Float,
+    onDrag: (dy: Float) -> Unit,
+    onEnd: (velocityY: Float) -> Unit,
+    skipStart: (Offset) -> Boolean = { false },
+): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        if (!enabled() || skipStart(down.position)) return@awaitEachGesture
+        val tracker = VelocityTracker()
+        tracker.addPosition(down.uptimeMillis, down.position)
+        var dx = 0f
+        var dy = 0f
+        var vertical = false
+        while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) break
+            if (!vertical) {
+                // Dois dedos (zoom) ou já consumido por outro: não é com este gesto.
+                if (event.changes.size > 1 || change.isConsumed) return@awaitEachGesture
+                dx += change.positionChange().x
+                dy += change.positionChange().y
+                if (hypot(dx, dy) < viewConfiguration.touchSlop) continue
+                val goesVertical = abs(dy) > abs(dx) * 1.2f && (progress() > 0f || dy < 0f)
+                if (!goesVertical) return@awaitEachGesture
+                vertical = true
+                tracker.addPosition(change.uptimeMillis, change.position)
+                onDrag(dy)
+            } else {
+                tracker.addPosition(change.uptimeMillis, change.position)
+                onDrag(change.positionChange().y)
+            }
+            change.consume()
+        }
+        if (vertical) onEnd(tracker.calculateVelocity().y)
+    }
+}

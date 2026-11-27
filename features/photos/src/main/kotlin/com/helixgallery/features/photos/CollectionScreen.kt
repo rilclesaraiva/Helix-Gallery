@@ -52,6 +52,7 @@ import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -245,13 +246,6 @@ fun CollectionScreen(
                     header = titleRow,
                     onZoomStep = viewModel::zoomStep,
                 )
-                GridScrubber(
-                    state = gridState,
-                    entries = entries,
-                    columns = prefs.columns,
-                    headerCount = 1,
-                    modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = 64.dp),
-                )
             }
         }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
@@ -314,6 +308,18 @@ fun CollectionScreen(
             actions = emptyList(),
             modifier = Modifier.align(Alignment.TopCenter),
         )
+        // A rolagem rápida fica por cima das barras da seleção e deixa livre o espaço delas (em cima e embaixo).
+        if (mediaState.loaded && items.isNotEmpty()) {
+            val scrubTop by animateDpAsState(if (selecting) 144.dp else 64.dp, helixSpatialSpec(), label = "scrubTop")
+            val scrubBottom by animateDpAsState(if (selecting) 112.dp else 0.dp, helixSpatialSpec(), label = "scrubBottom")
+            GridScrubber(
+                state = gridState,
+                entries = entries,
+                columns = prefs.columns,
+                headerCount = 1,
+                modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = scrubTop, bottom = scrubBottom),
+            )
+        }
     }
 
     confirm?.let { kind ->

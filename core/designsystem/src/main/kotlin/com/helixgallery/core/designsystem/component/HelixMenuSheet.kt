@@ -77,63 +77,80 @@ fun HelixMoreMenu(
     if (open) HelixMenuSheet(actions = actions, onDismiss = { open = false }, header = header)
 }
 
-/** O painel do menu: sobe de baixo, com as opções (ícone + texto) em lista. Tocar numa opção a faz e fecha descendo; opção com [HelixMenuAction.page] abre a página no mesmo painel. */
+/**
+ * O painel do menu: sobe de baixo, com as opções (ícone + texto) em lista. Tocar numa opção a faz e fecha
+ * descendo. Só vira painel inteligente ([HelixSmartSheet]) quando alguma opção tem [HelixMenuAction.page],
+ * isto é, quando há para onde voltar; senão é um painel independente.
+ */
 @Composable
 fun HelixMenuSheet(
     actions: List<HelixMenuAction>,
     onDismiss: () -> Unit,
     header: String? = null,
 ) {
-    HelixSmartSheet(onDismiss = onDismiss) {
-        val sheet = this
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-            if (header != null) {
-                Text(
-                    header,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 16.dp),
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(Modifier.height(8.dp))
-            }
-            actions.forEach { action ->
-                val tint = if (action.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = action.enabled) {
-                            val page = action.page
-                            if (page != null) {
-                                sheet.open(page)
-                            } else {
-                                action.onClick()
-                                sheet.dismiss()
-                            }
+    if (actions.any { it.page != null }) {
+        HelixSmartSheet(onDismiss = onDismiss) {
+            val sheet = this
+            MenuList(actions, header, onPage = { sheet.open(it) }, onDone = { sheet.dismiss() })
+        }
+    } else {
+        HelixModalSheet(onDismiss = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+            val sheet = this
+            MenuList(actions, header, onPage = {}, onDone = { sheet.dismiss() })
+        }
+    }
+}
+
+@Composable
+private fun MenuList(
+    actions: List<HelixMenuAction>,
+    header: String?,
+    onPage: (HelixPageContent) -> Unit,
+    onDone: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        if (header != null) {
+            Text(
+                header,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 16.dp),
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(Modifier.height(8.dp))
+        }
+        actions.forEach { action ->
+            val tint = if (action.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = action.enabled) {
+                        val page = action.page
+                        if (page != null) {
+                            onPage(page)
+                        } else {
+                            action.onClick()
+                            onDone()
                         }
-                        .padding(horizontal = 24.dp, vertical = 14.dp)
-                        .alpha(if (action.enabled) 1f else 0.38f),
-                ) {
-                    Icon(action.icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.width(20.dp))
-                    Text(
-                        action.label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (action.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (action.selected) {
-                        Icon(
-                            Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
                     }
+                    .padding(horizontal = 24.dp, vertical = 14.dp)
+                    .alpha(if (action.enabled) 1f else 0.38f),
+            ) {
+                Icon(action.icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(20.dp))
+                Text(
+                    action.label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (action.destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                if (action.selected) {
+                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
             }
-            Spacer(Modifier.height(16.dp))
         }
+        Spacer(Modifier.height(16.dp))
     }
 }

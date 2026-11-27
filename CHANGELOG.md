@@ -7,6 +7,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- Photo details now slide up from the bottom pushing the photo up with them (like Google Photos), following your finger; drag down, tap the photo or go back to close.
+- Pulling a photo up no longer opens the details while also switching to another photo: each gesture picks one direction at the start.
+- The period select button on date titles is smaller, fainter and a bit farther from the fast-scroll handle.
+- Panels are now smart panels only where there is a previous step to go back to; the rest stay independent panels.
 - Selection actions in the gallery (share, favorite, move to vault, trash) now sit in a horizontal list at the bottom of the screen, like Google Photos, instead of behind a ⋮ button.
 - Every date title now has a round button that selects (or unselects) that whole period.
 - Date titles are shorter: today, yesterday and the last week show the day name; older dates look like "Sun., Nov. 15"; dates from another year also show the year.
@@ -50,6 +54,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Fast-scroll handle:** only the handle itself reacts to your finger; sliding along the track just scrolls the list, and the handle follows your finger from where it is, without jumping.
 
 ### Fixed
+- The fast-scroll handle could not be seen or used while photos were selected; it now stays clear of the selection bars.
 - After leaving the app and coming back, the tabs could stay slightly shifted, showing a piece of the neighbouring tab; they now slide back into place.
 - Videos stop as soon as you leave them (they kept playing for a few seconds during the closing animation).
 - Drag to select works again.
