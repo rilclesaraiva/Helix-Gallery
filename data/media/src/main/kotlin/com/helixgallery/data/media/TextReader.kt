@@ -9,6 +9,7 @@ import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -16,9 +17,18 @@ import kotlin.coroutines.resume
 
 /** Lê o texto que aparece numa imagem, no próprio aparelho (nada sai dele). */
 interface TextReader {
-    /** O texto reconhecido em [uri] (vazio se não há texto), ou null se não deu para ler a imagem. */
-    suspend fun read(uri: String): String?
+    /** O texto reconhecido em [uri] (vazio se não há texto) ou o motivo de não ter dado para ler. Nunca lança. */
+    suspend fun read(uri: String): TextReadResult
 }
+
+sealed interface TextReadResult {
+    data class Text(val text: String) : TextReadResult
+
+    /** [detail] é o tipo e a mensagem do erro, para diagnóstico. */
+    data class Failure(val detail: String) : TextReadResult
+}
+
+private fun Throwable.detail(): String = "${this::class.java.simpleName}: ${message.orEmpty()}".take(300)
 
 object TextReaderData {
     fun reader(context: Context): TextReader = MlKitTextReader(context.applicationContext)
@@ -36,28 +46,29 @@ internal fun sampleSizeFor(width: Int, height: Int, maxSide: Int = 2048): Int {
 }
 
 private class MlKitTextReader(private val context: Context) : TextReader {
-    override suspend fun read(uri: String): String? = withContext(Dispatchers.Default) {
-        val bitmap = try {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, Uri.parse(uri))) { decoder, info, _ ->
+    override suspend fun read(uri: String): TextReadResult = withContext(Dispatchers.Default) {
+        // Qualquer erro (inclusive de código nativo ou de classe ausente) vira falha mostrada ao usuário, nunca crash.
+        try {
+            val bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, Uri.parse(uri))) { decoder, info, _ ->
                 // Por software: o ML Kit não lê bitmaps de hardware.
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                 decoder.setTargetSampleSize(sampleSizeFor(info.size.width, info.size.height))
             }
-        } catch (_: Exception) {
-            return@withContext null
-        } catch (_: OutOfMemoryError) {
-            return@withContext null
-        }
-        // Modelo latino (português, espanhol, inglês…), embutido no app: funciona sem rede.
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        try {
-            suspendCancellableCoroutine<String?> { cont ->
-                recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                    .addOnSuccessListener { result -> cont.resume(result.text) }
-                    .addOnFailureListener { cont.resume(null) }
+            // Modelo latino (português, espanhol, inglês…), embutido no app: funciona sem rede.
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            try {
+                suspendCancellableCoroutine<TextReadResult> { cont ->
+                    recognizer.process(InputImage.fromBitmap(bitmap, 0))
+                        .addOnSuccessListener { result -> cont.resume(TextReadResult.Text(result.text)) }
+                        .addOnFailureListener { error -> cont.resume(TextReadResult.Failure(error.detail())) }
+                }
+            } finally {
+                recognizer.close()
             }
-        } finally {
-            recognizer.close()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (t: Throwable) {
+            TextReadResult.Failure(t.detail())
         }
     }
 }

@@ -51,7 +51,20 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
                     CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
                     Text(stringResource(R.string.viewer_text_reading), style = MaterialTheme.typography.bodyLarge)
                 }
-                TextState.Failed -> Text(stringResource(R.string.viewer_text_failed), style = MaterialTheme.typography.bodyLarge)
+                is TextState.Failed -> {
+                    Text(stringResource(R.string.viewer_text_failed), style = MaterialTheme.typography.bodyLarge)
+                    // Detalhe técnico do erro (tipo e mensagem), para quem for relatar o problema.
+                    if (state.detail.isNotBlank()) {
+                        SelectionContainer {
+                            Text(
+                                state.detail,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                        }
+                    }
+                }
                 is TextState.Done -> if (state.text.isBlank()) {
                     Text(stringResource(R.string.viewer_text_none), style = MaterialTheme.typography.bodyLarge)
                 } else {

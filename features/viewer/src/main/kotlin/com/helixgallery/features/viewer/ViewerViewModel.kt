@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.helixgallery.core.model.MediaState
 import com.helixgallery.data.media.MediaData
+import com.helixgallery.data.media.TextReadResult
 import com.helixgallery.data.media.TextReaderData
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.data.media.MediaRepository
@@ -42,7 +43,7 @@ data class ExifInfo(
 sealed interface TextState {
     data object Reading : TextState
     data class Done(val text: String) : TextState
-    data object Failed : TextState
+    data class Failed(val detail: String) : TextState
 }
 
 class ViewerViewModel(application: Application) : AndroidViewModel(application) {
@@ -98,7 +99,10 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
         _text.value = TextState.Reading
         textJob = viewModelScope.launch {
             val result = textReader.read(uri)
-            _text.value = if (result == null) TextState.Failed else TextState.Done(result.trim())
+            _text.value = when (result) {
+                is TextReadResult.Text -> TextState.Done(result.text.trim())
+                is TextReadResult.Failure -> TextState.Failed(result.detail)
+            }
         }
     }
 
