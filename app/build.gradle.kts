@@ -26,6 +26,11 @@ android {
         applicationId = "com.helixgallery.app"
         versionCode = appVersionCode
         versionName = appVersion
+        // O reconhecimento de texto (ML Kit) traz código nativo por arquitetura (~4 MB cada): só arm64-v8a,
+        // que cobre os aparelhos com Android 12+ em uso.
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
     }
 
     // Idiomas do app (inglês, português, espanhol): gera a lista para o Android 13+

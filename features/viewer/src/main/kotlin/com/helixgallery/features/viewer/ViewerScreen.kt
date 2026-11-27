@@ -177,6 +177,7 @@ private fun ViewerContent(
     }
     var addTo by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
+    val textState by viewModel.text.collectAsStateWithLifecycle()
     val inTrash = source == MediaSource.Trash
     val current = items[pagerState.currentPage.coerceIn(0, items.lastIndex)]
 
@@ -261,6 +262,12 @@ private fun ViewerContent(
     // Os três pontinhos guardam só o que NÃO está na barra de baixo (compartilhar, editar, adicionar e lixeira já estão lá).
     val menuActions = listOf(
         HelixMenuAction(stringResource(R.string.viewer_details), Icons.Filled.Info, onClick = ::showDetails),
+        HelixMenuAction(
+            stringResource(R.string.viewer_copy_text),
+            HelixIcons.ContentCopy,
+            enabled = !current.isVideo,
+            onClick = { viewModel.readText(current.uri) },
+        ),
     )
 
     BoxWithConstraints(
@@ -463,6 +470,8 @@ private fun ViewerContent(
             onDismiss = { addTo = false },
         )
     }
+
+    textState?.let { TextSheet(it, onDismiss = viewModel::closeText) }
 
     confirm?.let { kind ->
         HelixConfirmSheet(

@@ -278,4 +278,11 @@ object HelixIcons {
             "M20,9H4v2h16V9zM4,15h16v-2H4v2z",
         )
     }
+
+    val ContentCopy: ImageVector by lazy {
+        vec(
+            "ContentCopy",
+            "M16,1L4,1c-1.1,0 -2,0.9 -2,2v14h2L4,3h12L16,1zM19,5L8,5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2L21,7c0,-1.1 -0.9,-2 -2,-2zM19,21L8,21L8,7h11v14z",
+        )
+    }
 }

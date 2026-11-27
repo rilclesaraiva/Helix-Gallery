@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.helixgallery.core.model.MediaState
 import com.helixgallery.data.media.MediaData
+import com.helixgallery.data.media.TextReaderData
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.data.media.MediaRepository
 import com.helixgallery.data.media.MediaWriterData
@@ -36,6 +37,13 @@ data class ExifInfo(
     val iso: String? = null,
     val focalLength: String? = null,
 )
+
+/** O "Copiar texto": o que o painel mostra. */
+sealed interface TextState {
+    data object Reading : TextState
+    data class Done(val text: String) : TextState
+    data object Failed : TextState
+}
 
 class ViewerViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -75,6 +83,28 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
             )
             onDone(ok)
         }
+    }
+
+    private val textReader = TextReaderData.reader(application)
+    private val _text = MutableStateFlow<TextState?>(null)
+
+    /** null = painel fechado. */
+    val text: StateFlow<TextState?> = _text.asStateFlow()
+    private var textJob: Job? = null
+
+    /** Lê o texto da imagem [uri] e abre o painel. */
+    fun readText(uri: String) {
+        textJob?.cancel()
+        _text.value = TextState.Reading
+        textJob = viewModelScope.launch {
+            val result = textReader.read(uri)
+            _text.value = if (result == null) TextState.Failed else TextState.Done(result.trim())
+        }
+    }
+
+    fun closeText() {
+        textJob?.cancel()
+        _text.value = null
     }
 
     private val _exif = MutableStateFlow<ExifResult?>(null)

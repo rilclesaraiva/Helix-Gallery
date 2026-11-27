@@ -13,4 +13,5 @@ dependencies {
     // "api": as features recebem o MediaItem junto com o repositório.
     api(project(":core:model"))
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.mlkit.text.recognition)
 }

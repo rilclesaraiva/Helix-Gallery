@@ -34,4 +34,11 @@
     <string name="viewer_locked">Guardada en la caja fuerte</string>
     <string name="viewer_lock_failed">No se pudo guardar en la caja fuerte</string>
     <string name="viewer_delete_trash">Eliminar</string>
+    <string name="viewer_copy_text">Copiar texto</string>
+    <string name="viewer_text_title">Texto en la imagen</string>
+    <string name="viewer_text_reading">Leyendo el texto…</string>
+    <string name="viewer_text_none">No se encontró texto.</string>
+    <string name="viewer_text_failed">No se pudo leer esta imagen.</string>
+    <string name="viewer_text_copy_all">Copiar todo</string>
+    <string name="viewer_text_copied">Texto copiado</string>
 </resources>

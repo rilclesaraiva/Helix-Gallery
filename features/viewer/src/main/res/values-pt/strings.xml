@@ -34,4 +34,11 @@
     <string name="viewer_locked">Trancada no cofre</string>
     <string name="viewer_lock_failed">Não deu para trancar no cofre</string>
     <string name="viewer_delete_trash">Excluir</string>
+    <string name="viewer_copy_text">Copiar texto</string>
+    <string name="viewer_text_title">Texto na imagem</string>
+    <string name="viewer_text_reading">Lendo o texto…</string>
+    <string name="viewer_text_none">Nenhum texto encontrado.</string>
+    <string name="viewer_text_failed">Não foi possível ler esta imagem.</string>
+    <string name="viewer_text_copy_all">Copiar tudo</string>
+    <string name="viewer_text_copied">Texto copiado</string>
 </resources>

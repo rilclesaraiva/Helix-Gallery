@@ -34,4 +34,11 @@
     <string name="viewer_locked">Locked in the vault</string>
     <string name="viewer_lock_failed">Couldn\'t lock it in the vault</string>
     <string name="viewer_delete_trash">Delete</string>
+    <string name="viewer_copy_text">Copy text</string>
+    <string name="viewer_text_title">Text in the image</string>
+    <string name="viewer_text_reading">Reading text…</string>
+    <string name="viewer_text_none">No text found.</string>
+    <string name="viewer_text_failed">Couldn't read this image.</string>
+    <string name="viewer_text_copy_all">Copy all</string>
+    <string name="viewer_text_copied">Text copied</string>
 </resources>
