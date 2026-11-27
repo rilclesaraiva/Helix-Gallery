@@ -15,8 +15,8 @@
     </plurals>
     <string name="albums_edit_tools">Editar herramientas</string>
     <string name="albums_edit_tools_title">Editar herramientas</string>
-    <string name="albums_pinned">Fijadas</string>
-    <string name="albums_to_pin">Arrastra para fijar</string>
+    <string name="albums_pinned">Arrastra para fijar</string>
+    <string name="albums_to_pin">Arrastra para quitar</string>
     <string name="albums_done">Listo</string>
     <string name="albums_reorder">Reordenar</string>
 </resources>

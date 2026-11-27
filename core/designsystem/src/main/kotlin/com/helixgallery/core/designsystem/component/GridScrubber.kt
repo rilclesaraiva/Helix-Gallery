@@ -81,6 +81,8 @@ fun GridScrubber(
     columns: Int,
     modifier: Modifier = Modifier,
     headerCount: Int = 0,
+    /** Balão com o mês ao lado da bolinha, ao arrastar. A aba Fotos usa a pílula do topo ([GridDatePill]) no lugar. */
+    showBubble: Boolean = true,
 ) {
     val locale = currentLocale()
     val lineStarts = remember(entries, columns, headerCount) { gridLineStarts(entries, columns, headerCount) }
@@ -136,7 +138,7 @@ fun GridScrubber(
         val thumbY = ((trackPx - thumbPx) * currentFraction).roundToInt()
 
         // Balão com a data, ao lado da bolinha, enquanto arrasta.
-        if (dragging) {
+        if (dragging && showBubble) {
             val entryIndex = (metrics.indexAt(currentFraction) - headerCount).coerceIn(0, (entries.size - 1).coerceAtLeast(0))
             val epoch = entries.getOrNull(entryIndex)?.epochDay()
             val label = remember(epoch, locale) {

@@ -15,8 +15,8 @@
     </plurals>
     <string name="albums_edit_tools">Edit tools</string>
     <string name="albums_edit_tools_title">Edit tools</string>
-    <string name="albums_pinned">Pinned</string>
-    <string name="albums_to_pin">Drag here to pin</string>
+    <string name="albums_pinned">Drag to pin</string>
+    <string name="albums_to_pin">Drag to remove</string>
     <string name="albums_done">Done</string>
     <string name="albums_reorder">Reorder</string>
 </resources>

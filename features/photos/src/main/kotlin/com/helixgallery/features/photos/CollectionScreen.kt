@@ -80,6 +80,7 @@ import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
 import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.HelixMenuAction
 import com.helixgallery.core.designsystem.component.HelixMoreMenu
+import com.helixgallery.core.designsystem.component.GridDatePill
 import com.helixgallery.core.designsystem.component.HelixPageTitle
 import com.helixgallery.core.designsystem.component.HelixStatusBarScrim
 import com.helixgallery.core.designsystem.component.HelixLoading
@@ -274,6 +275,15 @@ fun CollectionScreen(
             }
         }
         HelixStatusBarScrim(Modifier.align(Alignment.TopStart))
+        if (isTab && mediaState.loaded && items.isNotEmpty()) {
+            GridDatePill(
+                state = gridState,
+                entries = entries,
+                headerCount = 1,
+                enabled = !selecting,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
         // Ajustes (e o ⋮ da lixeira) flutuam no canto, como o voltar; com seleção, a barra do Boom toma o lugar.
         AnimatedVisibility(
             visible = !selecting,
@@ -342,6 +352,7 @@ fun CollectionScreen(
                 entries = entries,
                 columns = prefs.columns,
                 headerCount = 1,
+                showBubble = !isTab,
                 modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = scrubTop.coerceAtLeast(0.dp), bottom = scrubBottom.coerceAtLeast(0.dp)),
             )
         }

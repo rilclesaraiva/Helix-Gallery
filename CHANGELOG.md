@@ -10,8 +10,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 - The Photos tab is now one continuous grid: no date titles or select-period circles (the date still shows on the fast-scroll pill); albums and collections keep them. The photos at the outer corners of the grid are rounded, like Google Photos.
+- The Photos tab shows a date pill at the top of the screen while you scroll (or drag the fast-scroll handle), instead of the month balloon next to the handle.
 - Memory cards on the Photos tab are bigger.
-- Editing the Albums tools now works by dragging: hold and drag a tool to reorder it; drag it above the divider to pin it or below to unpin it. The up/down and Unpin buttons are gone.
+- Editing the Albums tools now works by dragging: hold and drag a tool to reorder it; drag it into the top area to pin it or into the bottom one to remove it. The up/down and Unpin buttons are gone.
 - The Photos and Albums tabs no longer show a title at the top; the Settings button stays in the corner.
 - Photo details now slide up from the bottom pushing the photo up with them (like Google Photos), following your finger; drag down, tap the photo or go back to close.
 - Pulling a photo up no longer opens the details while also switching to another photo: each gesture picks one direction at the start.
