@@ -10,7 +10,7 @@
     <string name="settings_dynamic_color">Cores do papel de parede</string>
     <string name="settings_dynamic_color_desc">Usar as cores do seu papel de parede em vez da paleta da nebulosa</string>
     <string name="settings_gallery">Galeria</string>
-    <string name="settings_layout">Layout das fotos</string>
+    <string name="settings_layout">Layout dos álbuns</string>
     <string name="layout_regular">Regular</string>
     <string name="layout_day">Por dia</string>
     <string name="layout_month">Por mês</string>

@@ -53,7 +53,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -62,6 +61,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
@@ -284,6 +290,19 @@ private fun EditToolsSheet(
             val pinned = order.takeWhile { it != PIN_DIVIDER }.mapNotNull { name -> AlbumTool.entries.firstOrNull { it.name == name } }
             onChange(pinned)
         }
+        // Ações sem arrastar (TalkBack): subir, descer, fixar e tirar.
+        fun moveBy(key: String, delta: Int) {
+            val a = order.indexOf(key)
+            val b = (a + delta).coerceIn(0, order.lastIndex)
+            if (a >= 0 && a != b) order = order.toMutableList().apply { add(b, removeAt(a)) }
+            commit()
+        }
+        fun setPinned(key: String, pin: Boolean) {
+            val list = order.toMutableList().apply { remove(key) }
+            list.add(list.indexOf(PIN_DIVIDER) + if (pin) 0 else 1, key)
+            order = list
+            commit()
+        }
         Column(Modifier.padding(bottom = 24.dp)) {
             Text(
                 stringResource(R.string.albums_edit_tools_title),
@@ -297,7 +316,7 @@ private fun EditToolsSheet(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
-            LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+            LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 520.dp)) {
                 items(order, key = { it }) { key ->
                     ReorderableItem(reorderState, key = key) { isDragging ->
                         if (key == PIN_DIVIDER) {
@@ -312,26 +331,43 @@ private fun EditToolsSheet(
                             val tool = AlbumTool.entries.first { it.name == key }
                             val pinned = order.indexOf(key) < order.indexOf(PIN_DIVIDER)
                             val info = toolInfo(tool, 0, 0, 0, 0)
+                            val rowColor by animateColorAsState(
+                                if (isDragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
+                                helixEffectsSpec(),
+                                label = "toolRowColor",
+                            )
+                            val rowElevation by animateDpAsState(if (isDragging) 8.dp else 0.dp, helixSpatialSpec(), label = "toolRowElevation")
+                            val contentColor by animateColorAsState(
+                                if (pinned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                helixEffectsSpec(),
+                                label = "toolContentColor",
+                            )
+                            val moveUp = stringResource(R.string.albums_move_up)
+                            val moveDown = stringResource(R.string.albums_move_down)
+                            val pinLabel = stringResource(if (pinned) R.string.albums_unpin else R.string.albums_pin)
                             Surface(
-                                color = if (isDragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
-                                shadowElevation = if (isDragging) 8.dp else 0.dp,
+                                color = rowColor,
+                                shadowElevation = rowElevation.coerceAtLeast(0.dp),
                             ) {
                                 Row(
                                     Modifier
                                         .fillMaxWidth()
+                                        .semantics {
+                                            customActions = listOf(
+                                                CustomAccessibilityAction(moveUp) { moveBy(key, -1); true },
+                                                CustomAccessibilityAction(moveDown) { moveBy(key, 1); true },
+                                                CustomAccessibilityAction(pinLabel) { setPinned(key, !pinned); true },
+                                            )
+                                        }
                                         .longPressDraggableHandle(onDragStopped = { commit() })
                                         .padding(horizontal = 24.dp, vertical = 14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Icon(
-                                        info.icon,
-                                        contentDescription = null,
-                                        tint = if (pinned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                    Icon(info.icon, contentDescription = null, tint = contentColor)
                                     Text(
                                         stringResource(info.title),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = if (pinned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = contentColor,
                                         modifier = Modifier.weight(1f).padding(start = 16.dp),
                                     )
                                     Icon(

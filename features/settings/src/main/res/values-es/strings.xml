@@ -10,7 +10,7 @@
     <string name="settings_dynamic_color">Colores del fondo de pantalla</string>
     <string name="settings_dynamic_color_desc">Usar los colores de tu fondo de pantalla en lugar de la paleta de la nebulosa</string>
     <string name="settings_gallery">Galería</string>
-    <string name="settings_layout">Diseño de las fotos</string>
+    <string name="settings_layout">Diseño de los álbumes</string>
     <string name="layout_regular">Regular</string>
     <string name="layout_day">Por día</string>
     <string name="layout_month">Por mes</string>

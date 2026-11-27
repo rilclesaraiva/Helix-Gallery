@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import java.time.LocalDate
-import com.helixgallery.core.model.buildStories
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -67,6 +65,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.helixgallery.core.common.shareMedia
@@ -139,24 +138,29 @@ fun CollectionScreen(
 
     val pageTitle = title ?: items.firstOrNull()?.bucketName.orEmpty()
     val selecting = selectedIds.isNotEmpty()
+    var scrubbing by remember { mutableStateOf(false) }
     // O app confirma antes de apagar (no lugar da caixa do sistema).
     var confirm by remember { mutableStateOf<Confirm?>(null) }
 
     // A aba Fotos não tem título: no topo ficam a faixa dos Ajustes e a fileira de lembranças.
-    val stories = remember(mediaState.items, isTab) {
-        if (isTab && onOpenStory != null) buildStories(mediaState.items, LocalDate.now()) else emptyList()
+    val stories = if (isTab && onOpenStory != null) viewModel.stories.collectAsStateWithLifecycle().value else emptyList()
+    if (isTab) LifecycleResumeEffect(Unit) {
+        viewModel.refreshToday()
+        onPauseOrDispose { }
     }
+    // Os botões (Ajustes, barra da seleção) flutuam sobre a página: a fileira de lembranças fica onde está ao
+    // selecionar, só sem toque. O recuo é do título das telas de dentro.
     val titleRow: @Composable () -> Unit = {
-        Box(Modifier.recedeWhileSelecting(selecting)) {
-            if (isTab) {
-                Column(Modifier.statusBarsPadding()) {
-                    Spacer(Modifier.height(64.dp))
-                    if (stories.isNotEmpty() && onOpenStory != null) {
-                        StoriesRow(stories, onOpenStory)
-                        Spacer(Modifier.height(12.dp))
-                    }
+        if (isTab) {
+            Column(Modifier.statusBarsPadding()) {
+                Spacer(Modifier.height(64.dp))
+                if (stories.isNotEmpty() && onOpenStory != null) {
+                    StoriesRow(stories, onOpenStory, enabled = !selecting)
+                    Spacer(Modifier.height(12.dp))
                 }
-            } else {
+            }
+        } else {
+            Box(Modifier.recedeWhileSelecting(selecting)) {
                 HelixPageTitle(
                     title = pageTitle,
                     hasBack = onBack != null,
@@ -269,7 +273,7 @@ fun CollectionScreen(
                     state = gridState,
                     contentPadding = PaddingValues(bottom = if (bottomInset) 112.dp else 16.dp),
                     header = titleRow,
-                    onZoomStep = viewModel::zoomStep,
+                    onZoomStep = { out -> viewModel.zoomStep(out, regularOnly = isTab) },
                     roundedEnds = isTab,
                 )
             }
@@ -281,6 +285,7 @@ fun CollectionScreen(
                 entries = entries,
                 headerCount = 1,
                 enabled = !selecting,
+                forceShown = scrubbing,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
@@ -353,6 +358,7 @@ fun CollectionScreen(
                 columns = prefs.columns,
                 headerCount = 1,
                 showBubble = !isTab,
+                onDraggingChange = { scrubbing = it },
                 modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(top = scrubTop.coerceAtLeast(0.dp), bottom = scrubBottom.coerceAtLeast(0.dp)),
             )
         }

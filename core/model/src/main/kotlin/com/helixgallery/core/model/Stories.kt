@@ -65,10 +65,14 @@ fun buildStories(
     var found = 0
     var yearsAgo = 1
     while (found < maxOnThisDay && yearsAgo <= MAX_YEARS_BACK) {
-        val epoch = today.minusYears(yearsAgo.toLong()).toEpochDay()
-        byDay[epoch]?.let { group ->
-            stories += Story.OnThisDay(yearsAgo, group.coverItem(), group.size, MediaSource.Day(epoch))
-            found++
+        val date = today.minusYears(yearsAgo.toLong())
+        // Em 29 de fevereiro, anos sem o dia 29 caem no 28: não é o mesmo dia, então esse ano não conta.
+        if (date.dayOfMonth == today.dayOfMonth) {
+            val epoch = date.toEpochDay()
+            byDay[epoch]?.let { group ->
+                stories += Story.OnThisDay(yearsAgo, group.coverItem(), group.size, MediaSource.Day(epoch))
+                found++
+            }
         }
         yearsAgo++
     }

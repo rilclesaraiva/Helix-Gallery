@@ -83,6 +83,8 @@ fun GridScrubber(
     headerCount: Int = 0,
     /** Balão com o mês ao lado da bolinha, ao arrastar. A aba Fotos usa a pílula do topo ([GridDatePill]) no lugar. */
     showBubble: Boolean = true,
+    /** Avisa quando o dedo entra ou sai da bolinha (a pílula de data fica visível enquanto ele está nela). */
+    onDraggingChange: (Boolean) -> Unit = {},
 ) {
     val locale = currentLocale()
     val lineStarts = remember(entries, columns, headerCount) { gridLineStarts(entries, columns, headerCount) }
@@ -90,6 +92,7 @@ fun GridScrubber(
     if (entries.size < MIN_ITEMS) return
 
     var dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(dragging) { onDraggingChange(dragging) }
     // Com o dedo na bolinha a troca de aba por gesto fica travada, para não disputar o movimento.
     val swipeLock = LocalTabSwipeLock.current
     DisposableEffect(swipeLock) { onDispose { swipeLock?.value = false } }

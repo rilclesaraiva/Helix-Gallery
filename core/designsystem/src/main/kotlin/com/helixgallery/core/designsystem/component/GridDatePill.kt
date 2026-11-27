@@ -41,12 +41,14 @@ fun GridDatePill(
     headerCount: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Mantém a pílula à mostra mesmo sem rolar (o dedo parado na bolinha da rolagem rápida). */
+    forceShown: Boolean = false,
 ) {
     val isScrolling by remember { derivedStateOf { state.isScrollInProgress } }
-    val pastHeader by remember { derivedStateOf { state.firstVisibleItemIndex >= headerCount && entries.isNotEmpty() } }
+    val pastHeader by remember(entries) { derivedStateOf { state.firstVisibleItemIndex >= headerCount && entries.isNotEmpty() } }
     var shown by remember { mutableStateOf(false) }
-    LaunchedEffect(isScrolling) {
-        if (isScrolling) {
+    LaunchedEffect(isScrolling, forceShown) {
+        if (isScrolling || forceShown) {
             shown = true
         } else {
             delay(HIDE_AFTER_MS)
@@ -54,7 +56,7 @@ fun GridDatePill(
         }
     }
     val epoch by remember(entries) {
-        derivedStateOf { entries.getOrNull((state.firstVisibleItemIndex - headerCount).coerceIn(0, entries.lastIndex))?.epochDay() }
+        derivedStateOf { entries.getOrNull((state.firstVisibleItemIndex - headerCount).coerceIn(0, maxOf(0, entries.lastIndex)))?.epochDay() }
     }
     // Guarda o último dia: ao sumir, a pílula não troca de texto no meio do desaparecer.
     var lastEpoch by remember { mutableStateOf(0L) }

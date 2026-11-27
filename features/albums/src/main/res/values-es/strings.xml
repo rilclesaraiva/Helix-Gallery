@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="albums_title">Álbumes</string>
     <string name="albums_settings">Ajustes</string>
     <string name="albums_favorites">Favoritas</string>
     <string name="albums_videos">Vídeos</string>
@@ -15,8 +14,12 @@
     </plurals>
     <string name="albums_edit_tools">Editar herramientas</string>
     <string name="albums_edit_tools_title">Editar herramientas</string>
-    <string name="albums_pinned">Arrastra para fijar</string>
-    <string name="albums_to_pin">Arrastra para quitar</string>
+    <string name="albums_pinned">Fijadas</string>
+    <string name="albums_to_pin">Sin fijar (arrastra para quitar)</string>
     <string name="albums_done">Listo</string>
     <string name="albums_reorder">Reordenar</string>
+    <string name="albums_move_up">Mover hacia arriba</string>
+    <string name="albums_move_down">Mover hacia abajo</string>
+    <string name="albums_pin">Fijar</string>
+    <string name="albums_unpin">Quitar de las fijadas</string>
 </resources>

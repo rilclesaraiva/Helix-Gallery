@@ -33,6 +33,7 @@ fun HelixStoryCard(
     subtitle: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val scrim = MaterialTheme.colorScheme.scrim
     Box(
@@ -40,7 +41,7 @@ fun HelixStoryCard(
             .size(width = 156.dp, height = 228.dp)
             .clip(MaterialTheme.shapes.extraLarge)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
     ) {
         HelixImage(uri = coverUri, modifier = Modifier.fillMaxSize())
         Box(

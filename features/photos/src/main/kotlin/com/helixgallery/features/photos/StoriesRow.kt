@@ -23,31 +23,34 @@ internal fun StoriesRow(
     stories: List<Story>,
     onOpen: (MediaSource) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         stories.forEach { story ->
-            val count = pluralStringResource(R.plurals.photos_story_count, story.count, story.count)
             when (story) {
                 is Story.OnThisDay -> HelixStoryCard(
                     coverUri = story.cover.uri,
                     title = pluralStringResource(R.plurals.photos_story_years_ago, story.yearsAgo, story.yearsAgo),
                     subtitle = stringResource(R.string.photos_story_on_this_day),
                     onClick = { onOpen(story.source) },
+                    enabled = enabled,
                 )
                 is Story.QuickAlbum -> HelixStoryCard(
                     coverUri = story.cover.uri,
                     title = story.name,
-                    subtitle = count,
+                    subtitle = pluralStringResource(R.plurals.photos_story_count, story.count, story.count),
                     onClick = { onOpen(story.source) },
+                    enabled = enabled,
                 )
                 is Story.Favorites -> HelixStoryCard(
                     coverUri = story.cover.uri,
                     title = stringResource(R.string.photos_story_favorites),
-                    subtitle = count,
+                    subtitle = pluralStringResource(R.plurals.photos_story_count, story.count, story.count),
                     onClick = { onOpen(story.source) },
+                    enabled = enabled,
                 )
             }
         }

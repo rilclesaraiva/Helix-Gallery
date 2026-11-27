@@ -10,7 +10,7 @@
     <string name="settings_dynamic_color">Wallpaper colors</string>
     <string name="settings_dynamic_color_desc">Use your wallpaper colors instead of the nebula palette</string>
     <string name="settings_gallery">Gallery</string>
-    <string name="settings_layout">Photo layout</string>
+    <string name="settings_layout">Album layout</string>
     <string name="layout_regular">Regular</string>
     <string name="layout_day">By day</string>
     <string name="layout_month">By month</string>

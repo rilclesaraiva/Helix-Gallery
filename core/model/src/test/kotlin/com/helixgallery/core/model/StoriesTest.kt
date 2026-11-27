@@ -46,6 +46,26 @@ class StoriesTest {
     }
 
     @Test
+    fun vinteENoveDeFevereiroNaoCaiNoDia28() {
+        val leap = LocalDate.of(2028, 2, 29)
+        val items = listOf(
+            fakeMedia(2, date = LocalDate.of(2027, 2, 28)),
+            fakeMedia(1, date = LocalDate.of(2024, 2, 29)),
+        )
+        val days = buildStories(items, leap, ZoneOffset.UTC).filterIsInstance<Story.OnThisDay>()
+        assertEquals(listOf(4), days.map { it.yearsAgo })
+    }
+
+    @Test
+    fun respeitaOsLimitesDeNesteDiaEAlbunsRapidos() {
+        val items = (1..6).map { fakeMedia(it.toLong(), date = LocalDate.of(2026 - it, 11, 26), bucketId = it.toLong(), bucketName = "B$it") } +
+            (7..14).map { fakeMedia(it.toLong(), bucketId = it.toLong(), bucketName = "B$it") }
+        val stories = buildStories(items, today, ZoneOffset.UTC, maxOnThisDay = 2, maxQuickAlbums = 3)
+        assertEquals(2, stories.filterIsInstance<Story.OnThisDay>().size)
+        assertEquals(3, stories.filterIsInstance<Story.QuickAlbum>().size)
+    }
+
+    @Test
     fun capaPrefereFotoAVideo() {
         val items = listOf(
             fakeMedia(2, date = LocalDate.of(2025, 11, 26), isVideo = true),
