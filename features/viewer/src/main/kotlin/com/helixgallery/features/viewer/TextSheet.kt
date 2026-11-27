@@ -12,18 +12,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.helixgallery.core.designsystem.component.HelixModalSheet
 
 /**
- * Painel do "Copiar texto": mostra o texto reconhecido na imagem (dá para selecionar um trecho e copiar) e um
+ * Painel do "Copiar texto": mostra o texto reconhecido na imagem num campo editável (para corrigir erros) e um
  * botão para copiar tudo. A leitura é feita no aparelho.
  */
 @Composable
@@ -40,7 +43,7 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
     val context = LocalContext.current
     HelixModalSheet(onDismiss = onDismiss) {
         val sheet = this
-        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
+        Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             Text(
                 stringResource(R.string.viewer_text_title),
                 style = MaterialTheme.typography.titleLarge,
@@ -69,23 +72,29 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
                 is TextState.Done -> if (state.flowed.isBlank()) {
                     Text(stringResource(R.string.viewer_text_none), style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    SelectionContainer {
-                        Text(
-                            state.flowed,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
-                        )
-                    }
+                    // O texto lido pode ter erros: dá para corrigir aqui antes de copiar.
+                    var edited by rememberSaveable(state.flowed) { mutableStateOf(state.flowed) }
+                    OutlinedTextField(
+                        value = edited,
+                        onValueChange = { edited = it },
+                        label = { Text(stringResource(R.string.viewer_text_edit_label)) },
+                        shape = MaterialTheme.shapes.large,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        minLines = 3,
+                        maxLines = 12,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     Button(
                         onClick = {
-                            copyToClipboard(context, state.flowed)
+                            copyToClipboard(context, edited)
                             sheet.dismiss()
                         },
+                        enabled = edited.isNotBlank(),
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     ) { Text(stringResource(R.string.viewer_text_copy_all)) }
-                    // Com as quebras de linha como estão na imagem (útil para listas e tabelas).
-                    if (state.original != state.flowed) {
+                    // Com as quebras de linha como estão na imagem (útil para listas e tabelas); some depois de editar,
+                    // porque aí o texto é um só.
+                    if (state.original != state.flowed && edited == state.flowed) {
                         TextButton(
                             onClick = {
                                 copyToClipboard(context, state.original)
