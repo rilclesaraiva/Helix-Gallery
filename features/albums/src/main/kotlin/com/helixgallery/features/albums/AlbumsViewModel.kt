@@ -10,7 +10,6 @@ import com.helixgallery.core.datastore.HelixPreferences
 import com.helixgallery.core.model.AlbumTool
 import com.helixgallery.core.model.DEFAULT_ALBUM_TOOLS
 import com.helixgallery.core.model.MediaState
-import com.helixgallery.core.model.moveAlbumTool
 import com.helixgallery.data.media.MediaData
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,11 +26,8 @@ class AlbumsViewModel(application: Application) : AndroidViewModel(application) 
     val tools: StateFlow<List<AlbumTool>> = prefs.preferences.map { it.albumTools }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_ALBUM_TOOLS)
 
-    fun pin(tool: AlbumTool) = save(tools.value + tool)
-
-    fun unpin(tool: AlbumTool) = save(tools.value - tool)
-
-    fun move(tool: AlbumTool, delta: Int) = save(moveAlbumTool(tools.value, tool, delta))
+    /** Grava as fixadas na ordem da tela (o que cruzou o divisor entra ou sai). */
+    fun setPinned(list: List<AlbumTool>) = save(list)
 
     private fun save(list: List<AlbumTool>) {
         viewModelScope.launch { prefs.setAlbumTools(list) }

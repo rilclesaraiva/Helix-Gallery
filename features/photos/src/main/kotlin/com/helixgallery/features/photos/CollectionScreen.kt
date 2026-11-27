@@ -120,7 +120,10 @@ fun CollectionScreen(
     val selectedIds by viewModel.selected.collectAsStateWithLifecycle()
 
     val items = remember(source, mediaState) { selectMedia(source, mediaState) }
-    val entries = remember(items, prefs.gridLayout) { buildEntries(items, prefs.gridLayout) }
+    // A aba Fotos é uma grade corrida, sem títulos de data nem bolinhas (a data aparece na pílula da rolagem rápida);
+    // álbuns e coleções seguem o layout escolhido (Regular/Dia/Mês).
+    val isTab = onBack == null && onOpenSettings != null
+    val entries = remember(items, prefs.gridLayout, isTab) { buildEntries(items, if (isTab) GridLayout.Regular else prefs.gridLayout) }
     val selectedItems = remember(items, selectedIds) { items.filter { it.id in selectedIds } }
     val gridState = rememberLazyGridState()
     if (reselectTab != null) ScrollToTopOnReselect(reselectTab, gridState)
@@ -139,7 +142,6 @@ fun CollectionScreen(
     var confirm by remember { mutableStateOf<Confirm?>(null) }
 
     // A aba Fotos não tem título: no topo ficam a faixa dos Ajustes e a fileira de lembranças.
-    val isTab = onBack == null && onOpenSettings != null
     val stories = remember(mediaState.items, isTab) {
         if (isTab && onOpenStory != null) buildStories(mediaState.items, LocalDate.now()) else emptyList()
     }
@@ -148,7 +150,10 @@ fun CollectionScreen(
             if (isTab) {
                 Column(Modifier.statusBarsPadding()) {
                     Spacer(Modifier.height(64.dp))
-                    if (stories.isNotEmpty() && onOpenStory != null) StoriesRow(stories, onOpenStory)
+                    if (stories.isNotEmpty() && onOpenStory != null) {
+                        StoriesRow(stories, onOpenStory)
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
             } else {
                 HelixPageTitle(
@@ -264,6 +269,7 @@ fun CollectionScreen(
                     contentPadding = PaddingValues(bottom = if (bottomInset) 112.dp else 16.dp),
                     header = titleRow,
                     onZoomStep = viewModel::zoomStep,
+                    roundedEnds = isTab,
                 )
             }
         }

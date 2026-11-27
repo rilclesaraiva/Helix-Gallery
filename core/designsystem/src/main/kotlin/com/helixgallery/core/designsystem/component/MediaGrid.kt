@@ -39,6 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -135,8 +138,18 @@ fun MediaGrid(
     header: (@Composable () -> Unit)? = null,
     /** Pinça sobre a grade: `zoomOut` true quando os dedos se juntam. null = sem pinça. */
     onZoomStep: ((zoomOut: Boolean) -> Unit)? = null,
+    /** Arredonda os cantos de fora da grade (os da primeira e da última linha), como o Google Fotos. */
+    roundedEnds: Boolean = false,
 ) {
     val selecting = selectedIds.isNotEmpty()
+    val endShape = MaterialTheme.shapes.extraLarge
+    val positions = remember(entries, roundedEnds) {
+        if (!roundedEnds) emptyMap() else {
+            val map = HashMap<Long, Int>()
+            entries.forEachIndexed { i, e -> if (e is GridEntry.Media) map[e.item.id] = i }
+            map
+        }
+    }
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val currentSelected by rememberUpdatedState(selectedIds)
@@ -283,6 +296,11 @@ fun MediaGrid(
                 }
                 is GridEntry.Media -> MediaTile(
                     modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec),
+                    cornerShape = if (roundedEnds) {
+                        endCorners(endShape, positions[entry.item.id] ?: -1, entries.size, columns)
+                    } else {
+                        null
+                    },
                     item = entry.item,
                     selected = entry.item.id in selectedIds,
                     selecting = selecting,
@@ -344,6 +362,7 @@ fun MediaTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
+    cornerShape: Shape? = null,
 ) {
     val scale by animateFloatAsState(
         targetValue = if (selected) 0.84f else 1f,
@@ -363,7 +382,7 @@ fun MediaTile(
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(if (selected) RoundedCornerShape(16.dp) else RoundedCornerShape(0.dp))
+                .clip(if (selected) RoundedCornerShape(16.dp) else cornerShape ?: RoundedCornerShape(0.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         )
         if (item.isVideo) {
@@ -427,4 +446,24 @@ fun formatDuration(ms: Long): String {
     val m = (total % 3600) / 60
     val s = total % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+}
+
+/**
+ * Cantos arredondados só nos cantos de fora da grade: os de cima na primeira linha, os de baixo na última
+ * (na última, incompleta, a última foto leva o canto da direita). [index] < 0 = sem arredondar.
+ */
+private fun endCorners(base: CornerBasedShape, index: Int, count: Int, columns: Int): Shape? {
+    if (index < 0 || columns < 1) return null
+    val col = index % columns
+    val first = index < columns
+    val last = index >= (count - 1) / columns * columns
+    val start = col == 0
+    val end = col == columns - 1 || index == count - 1
+    val zero = CornerSize(0.dp)
+    return base.copy(
+        topStart = if (first && start) base.topStart else zero,
+        topEnd = if (first && end) base.topEnd else zero,
+        bottomStart = if (last && start) base.bottomStart else zero,
+        bottomEnd = if (last && end) base.bottomEnd else zero,
+    )
 }

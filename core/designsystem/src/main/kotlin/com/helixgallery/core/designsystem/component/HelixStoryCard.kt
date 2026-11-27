@@ -37,7 +37,7 @@ fun HelixStoryCard(
     val scrim = MaterialTheme.colorScheme.scrim
     Box(
         modifier
-            .size(width = 108.dp, height = 156.dp)
+            .size(width = 156.dp, height = 228.dp)
             .clip(MaterialTheme.shapes.extraLarge)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick),
@@ -49,18 +49,18 @@ fun HelixStoryCard(
                 .background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to scrim.copy(alpha = 0.75f))),
         )
         Column(
-            Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(horizontal = 10.dp, vertical = 10.dp),
+            Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
         ) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 subtitle,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = Color.White.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

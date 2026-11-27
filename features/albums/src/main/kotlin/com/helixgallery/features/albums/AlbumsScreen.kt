@@ -20,6 +20,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.heightIn
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -41,8 +47,6 @@ import com.helixgallery.core.model.AlbumTool
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -192,9 +196,7 @@ fun AlbumsScreen(
         if (editTools) {
             EditToolsSheet(
                 tools = tools,
-                onUnpin = viewModel::unpin,
-                onPin = viewModel::pin,
-                onMove = viewModel::move,
+                onChange = viewModel::setPinned,
                 onDismiss = { editTools = false },
             )
         }
@@ -257,17 +259,32 @@ private fun EditToolsTile(onClick: () -> Unit) {
     }
 }
 
+/** Chaves da lista do painel: o nome da ferramenta, ou [PIN_DIVIDER] entre as fixadas e as de fora. */
+private const val PIN_DIVIDER = "divider"
+
 @Composable
 private fun EditToolsSheet(
     tools: List<AlbumTool>,
-    onUnpin: (AlbumTool) -> Unit,
-    onPin: (AlbumTool) -> Unit,
-    onMove: (AlbumTool, Int) -> Unit,
+    onChange: (List<AlbumTool>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     HelixModalSheet(onDismiss = onDismiss) {
         val sheet = this
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+        // Uma lista só: fixadas, divisor, de fora. Cruzar o divisor fixa ou tira (como a fila do Boom, com cópia local).
+        var order by remember {
+            mutableStateOf(tools.map { it.name } + PIN_DIVIDER + AlbumTool.entries.filter { it !in tools }.map { it.name })
+        }
+        val listState = rememberLazyListState()
+        val reorderState = rememberReorderableLazyListState(listState) { from, to ->
+            val a = order.indexOf(from.key)
+            val b = order.indexOf(to.key)
+            if (a >= 0 && b >= 0) order = order.toMutableList().apply { add(b, removeAt(a)) }
+        }
+        fun commit() {
+            val pinned = order.takeWhile { it != PIN_DIVIDER }.mapNotNull { name -> AlbumTool.entries.firstOrNull { it.name == name } }
+            onChange(pinned)
+        }
+        Column(Modifier.padding(bottom = 24.dp)) {
             Text(
                 stringResource(R.string.albums_edit_tools_title),
                 style = MaterialTheme.typography.titleLarge,
@@ -280,47 +297,51 @@ private fun EditToolsSheet(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
-            tools.forEachIndexed { index, tool ->
-                val info = toolInfo(tool, 0, 0, 0, 0)
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(info.icon, contentDescription = null, modifier = Modifier.padding(start = 8.dp, end = 16.dp))
-                    Text(
-                        stringResource(info.title),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    IconButton(onClick = { onMove(tool, -1) }, enabled = index > 0) {
-                        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(R.string.albums_move_up))
-                    }
-                    IconButton(onClick = { onMove(tool, 1) }, enabled = index < tools.lastIndex) {
-                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.albums_move_down))
-                    }
-                    TextButton(onClick = { onUnpin(tool) }) { Text(stringResource(R.string.albums_unpin)) }
-                }
-            }
-            val hidden = AlbumTool.entries.filter { it !in tools }
-            if (hidden.isNotEmpty()) {
-                Text(
-                    stringResource(R.string.albums_to_pin),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-                hidden.forEach { tool ->
-                    val info = toolInfo(tool, 0, 0, 0, 0)
-                    Row(
-                        Modifier.fillMaxWidth().clickable { onPin(tool) }.padding(horizontal = 24.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(info.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(
-                            stringResource(info.title),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f).padding(start = 16.dp),
-                        )
-                        Icon(HelixIcons.Add, contentDescription = stringResource(R.string.albums_pin))
+            LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+                items(order, key = { it }) { key ->
+                    ReorderableItem(reorderState, key = key) { isDragging ->
+                        if (key == PIN_DIVIDER) {
+                            // Alvo do arrasto, sem puxador: o que fica abaixo dele está fora das fixadas.
+                            Text(
+                                stringResource(R.string.albums_to_pin),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+                            )
+                        } else {
+                            val tool = AlbumTool.entries.first { it.name == key }
+                            val pinned = order.indexOf(key) < order.indexOf(PIN_DIVIDER)
+                            val info = toolInfo(tool, 0, 0, 0, 0)
+                            Surface(
+                                color = if (isDragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
+                                shadowElevation = if (isDragging) 8.dp else 0.dp,
+                            ) {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .longPressDraggableHandle(onDragStopped = { commit() })
+                                        .padding(horizontal = 24.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        info.icon,
+                                        contentDescription = null,
+                                        tint = if (pinned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        stringResource(info.title),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = if (pinned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(1f).padding(start = 16.dp),
+                                    )
+                                    Icon(
+                                        HelixIcons.DragHandle,
+                                        contentDescription = stringResource(R.string.albums_reorder),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

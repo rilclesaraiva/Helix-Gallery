@@ -9,6 +9,9 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - Photos tab now opens with a row of story-style memory cards: "On this day" (years ago), quick albums (the folders you used most recently) and Favorites. Everything is built from dates and folders already on the device; nothing is analysed. Tapping a card opens that day or album.
 
 ### Changed
+- The Photos tab is now one continuous grid: no date titles or select-period circles (the date still shows on the fast-scroll pill); albums and collections keep them. The photos at the outer corners of the grid are rounded, like Google Photos.
+- Memory cards on the Photos tab are bigger.
+- Editing the Albums tools now works by dragging: hold and drag a tool to reorder it; drag it above the divider to pin it or below to unpin it. The up/down and Unpin buttons are gone.
 - The Photos and Albums tabs no longer show a title at the top; the Settings button stays in the corner.
 - Photo details now slide up from the bottom pushing the photo up with them (like Google Photos), following your finger; drag down, tap the photo or go back to close.
 - Pulling a photo up no longer opens the details while also switching to another photo: each gesture picks one direction at the start.

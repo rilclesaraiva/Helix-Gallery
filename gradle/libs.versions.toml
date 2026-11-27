@@ -23,6 +23,8 @@ datastore = "1.2.1"
 coil = "3.6.3"
 # Cofre: ZIP com criptografia AES-256 (Java puro, sem código nativo; 2.11.5 conferida no Maven Central).
 zip4j = "2.11.5"
+# Reordenar por arrasto (mesma versão do BoomListener): editar ferramentas dos Álbuns. Apache 2.0.
+reorderable = "3.1.0"
 
 [libraries]
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidxCore" }
@@ -46,6 +48,7 @@ androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.re
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-video = { group = "io.coil-kt.coil3", name = "coil-video", version.ref = "coil" }
+reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 
