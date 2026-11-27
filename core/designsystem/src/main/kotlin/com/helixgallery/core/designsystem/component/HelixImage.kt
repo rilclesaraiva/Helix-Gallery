@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 
 /**
  * Imagem de uma foto ou de um quadro de vídeo. Só o design system conhece o Coil:
@@ -22,6 +23,8 @@ fun HelixImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     contentDescription: String? = null,
+    /** Chamado quando a imagem carrega, com o tamanho dela (largura, altura) como aparece na tela (já com a rotação). */
+    onImageSize: ((width: Float, height: Float) -> Unit)? = null,
 ) {
     val parsed = remember(uri) { Uri.parse(uri) }
     Box(modifier) {
@@ -30,6 +33,9 @@ fun HelixImage(
             contentDescription = contentDescription,
             contentScale = contentScale,
             modifier = Modifier.matchParentSize(),
+            onSuccess = onImageSize?.let { callback ->
+                { state: AsyncImagePainter.State.Success -> callback(state.painter.intrinsicSize.width, state.painter.intrinsicSize.height) }
+            },
         )
     }
 }

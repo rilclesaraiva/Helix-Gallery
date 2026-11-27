@@ -12,6 +12,7 @@ import com.helixgallery.core.model.MediaState
 import com.helixgallery.data.media.MediaData
 import com.helixgallery.data.media.TextReadResult
 import com.helixgallery.data.media.TextReaderData
+import com.helixgallery.data.media.TextRegion
 import com.helixgallery.core.model.MediaItem
 import com.helixgallery.data.media.MediaRepository
 import com.helixgallery.data.media.MediaWriterData
@@ -93,12 +94,12 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
     val text: StateFlow<TextState?> = _text.asStateFlow()
     private var textJob: Job? = null
 
-    /** Lê o texto da imagem [uri] e abre o painel. */
-    fun readText(uri: String) {
+    /** Lê o texto da imagem [uri] (só da [region], se houver) e abre o painel. */
+    fun readText(uri: String, region: TextRegion? = null) {
         textJob?.cancel()
         _text.value = TextState.Reading
         textJob = viewModelScope.launch {
-            val result = textReader.read(uri)
+            val result = textReader.read(uri, region)
             _text.value = when (result) {
                 is TextReadResult.Text -> TextState.Done(result.flowed.trim(), result.original.trim())
                 is TextReadResult.Failure -> TextState.Failed(result.detail)

@@ -68,4 +68,57 @@ class TextReaderTest {
         val a = pass("igual", 0.9f)
         assertEquals(a, pickBetter(a, pass("igual", 0.9f)))
     }
+
+    @Test
+    fun areaEmPixelsFicaDentroDaImagem() {
+        assertEquals(listOf(100, 200, 400, 300), regionPixels(1000, 1000, TextRegion(0.1f, 0.2f, 0.5f, 0.5f)).toList())
+        // Área colada na borda direita/baixo não passa do tamanho.
+        assertEquals(listOf(900, 900, 100, 100), regionPixels(1000, 1000, TextRegion(0.9f, 0.9f, 1f, 1f)).toList())
+    }
+
+    @Test
+    fun moverNaoSaiDaImagemENaoMudaOTamanho() {
+        val moved = TextRegion(0.2f, 0.2f, 0.6f, 0.5f).movedBy(0.9f, -0.9f)
+        assertEquals(TextRegion(0.6f, 0f, 1f, 0.3f).width, moved.width, 0.0001f)
+        assertEquals(1f, moved.right, 0.0001f)
+        assertEquals(0f, moved.top, 0.0001f)
+    }
+
+    @Test
+    fun cantoNaoPassaDoTamanhoMinimoNemDaImagem() {
+        val region = TextRegion(0.2f, 0.2f, 0.6f, 0.6f)
+        val shrunk = region.withCorner(RegionCorner.TopLeft, 0.9f, 0.9f)
+        assertEquals(0.6f - TextRegion.MIN_SIZE, shrunk.left, 0.0001f)
+        assertEquals(0.6f - TextRegion.MIN_SIZE, shrunk.top, 0.0001f)
+        val grown = region.withCorner(RegionCorner.BottomRight, 2f, -3f)
+        assertEquals(1f, grown.right, 0.0001f)
+        assertEquals(0.2f + TextRegion.MIN_SIZE, grown.bottom, 0.0001f)
+    }
+
+    @Test
+    fun aumentarEDiminuirEmVoltaDoCentro() {
+        val region = TextRegion(0.25f, 0.25f, 0.75f, 0.75f)
+        val grown = region.scaledAroundCenter(1.5f)
+        assertEquals(0.75f, grown.width, 0.0001f)
+        assertEquals(0.125f, grown.left, 0.0001f)
+        assertEquals(true, region.scaledAroundCenter(10f).isFull)
+        assertEquals(TextRegion.MIN_SIZE, region.scaledAroundCenter(0.01f).width, 0.0001f)
+    }
+
+    @Test
+    fun areaInteiraEReconhecida() {
+        assertEquals(true, TextRegion.Full.isFull)
+        assertEquals(false, TextRegion(0f, 0f, 1f, 0.9f).isFull)
+    }
+
+    @Test
+    fun amostragemComAreaPrefereDetalheMasLimitaAImagemInteira() {
+        val small = TextRegion(0f, 0f, 0.1f, 0.1f)
+        // Foto de 4000 px: com a área pequena continua sem reduzir; a imagem inteira já cabe.
+        assertEquals(1, decodeSampleSize(4000, 3000, small))
+        // Foto enorme de 12000 px: mesmo com área pequena, a imagem toda é reduzida (2 => 6000 px; limite ~4096 => fator 2).
+        assertEquals(2, decodeSampleSize(12000, 9000, small))
+        // Sem área, vale o fator da imagem inteira.
+        assertEquals(sampleSizeFor(12000, 9000), decodeSampleSize(12000, 9000, null))
+    }
 }

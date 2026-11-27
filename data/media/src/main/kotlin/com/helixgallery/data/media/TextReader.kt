@@ -25,8 +25,11 @@ import kotlin.coroutines.resumeWithException
 
 /** Lê o texto que aparece numa imagem, no próprio aparelho (nada sai dele). */
 interface TextReader {
-    /** O texto reconhecido em [uri] (vazio se não há texto) ou o motivo de não ter dado para ler. Nunca lança. */
-    suspend fun read(uri: String): TextReadResult
+    /**
+     * O texto reconhecido em [uri] (vazio se não há texto) ou o motivo de não ter dado para ler. Nunca lança.
+     * Com [region], lê só essa parte da imagem (ela é ampliada ao máximo que a memória permite).
+     */
+    suspend fun read(uri: String, region: TextRegion? = null): TextReadResult
 }
 
 sealed interface TextReadResult {
@@ -115,14 +118,34 @@ private suspend fun TextRecognizer.recognize(bitmap: Bitmap): OcrPass = suspendC
         .addOnFailureListener { error -> cont.resumeWithException(error) }
 }
 
+/**
+ * Fator de redução ao decodificar. Sem área, o da imagem inteira. Com área, o que deixa a área com cerca de
+ * [maxSide] pixels (mais detalhe para texto pequeno), mas sem deixar a imagem inteira passar de ~4096 pixels
+ * (a foto toda é decodificada antes do recorte).
+ */
+internal fun decodeSampleSize(width: Int, height: Int, region: TextRegion?, maxSide: Int = 2048): Int {
+    if (region == null || region.isFull) return sampleSizeFor(width, height, maxSide)
+    val forRegion = sampleSizeFor((width * region.width).toInt().coerceAtLeast(1), (height * region.height).toInt().coerceAtLeast(1), maxSide)
+    return maxOf(forRegion, sampleSizeFor(width, height, WHOLE_IMAGE_CAP))
+}
+
+private const val WHOLE_IMAGE_CAP = 4096
+
 private class MlKitTextReader(private val context: Context) : TextReader {
-    override suspend fun read(uri: String): TextReadResult = withContext(Dispatchers.Default) {
+    override suspend fun read(uri: String, region: TextRegion?): TextReadResult = withContext(Dispatchers.Default) {
         // Qualquer erro (inclusive de código nativo ou de classe ausente) vira falha mostrada ao usuário, nunca crash.
         try {
-            val bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, Uri.parse(uri))) { decoder, info, _ ->
+            val decoded = ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, Uri.parse(uri))) { decoder, info, _ ->
                 // Por software: o ML Kit não lê bitmaps de hardware.
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-                decoder.setTargetSampleSize(sampleSizeFor(info.size.width, info.size.height))
+                decoder.setTargetSampleSize(decodeSampleSize(info.size.width, info.size.height, region))
+            }
+            // Só a área escolhida: o resto da imagem nem chega ao reconhecedor.
+            val bitmap = if (region == null || region.isFull) {
+                decoded
+            } else {
+                val (x, y, w, h) = regionPixels(decoded.width, decoded.height, region)
+                Bitmap.createBitmap(decoded, x, y, w, h).also { if (it !== decoded) decoded.recycle() }
             }
             // Modelo latino (português, espanhol, inglês…), embutido no app: funciona sem rede.
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)

@@ -176,6 +176,7 @@ private fun ViewerContent(
         }
     }
     var addTo by remember { mutableStateOf(false) }
+    var pickingArea by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<ViewerConfirm?>(null) }
     val textState by viewModel.text.collectAsStateWithLifecycle()
     val inTrash = source == MediaSource.Trash
@@ -267,6 +268,12 @@ private fun ViewerContent(
             HelixIcons.ContentCopy,
             enabled = !current.isVideo,
             onClick = { viewModel.readText(current.uri) },
+        ),
+        HelixMenuAction(
+            stringResource(R.string.viewer_copy_text_area),
+            HelixIcons.ContentCopy,
+            enabled = !current.isVideo,
+            onClick = { pickingArea = true },
         ),
     )
 
@@ -472,6 +479,17 @@ private fun ViewerContent(
     }
 
     textState?.let { TextSheet(it, onDismiss = viewModel::closeText) }
+
+    if (pickingArea) {
+        TextAreaPicker(
+            uri = current.uri,
+            onRead = { region ->
+                pickingArea = false
+                viewModel.readText(current.uri, region.takeUnless { it.isFull })
+            },
+            onCancel = { pickingArea = false },
+        )
+    }
 
     confirm?.let { kind ->
         HelixConfirmSheet(

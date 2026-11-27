@@ -43,4 +43,16 @@
     <string name="viewer_text_copied">Text copied</string>
     <string name="viewer_text_copy_original">Copy with original line breaks</string>
     <string name="viewer_text_edit_label">Edit the text to fix mistakes</string>
+    <string name="viewer_copy_text_area">Copy text from an area…</string>
+    <string name="viewer_area_title">Choose the area to read</string>
+    <string name="viewer_area_hint">Drag the corners to resize, or the box to move it.</string>
+    <string name="viewer_area_read">Read area</string>
+    <string name="viewer_area_cancel">Cancel</string>
+    <string name="viewer_area_description">Area to read</string>
+    <string name="viewer_area_bigger">Larger area</string>
+    <string name="viewer_area_smaller">Smaller area</string>
+    <string name="viewer_area_up">Move area up</string>
+    <string name="viewer_area_down">Move area down</string>
+    <string name="viewer_area_left">Move area left</string>
+    <string name="viewer_area_right">Move area right</string>
 </resources>
