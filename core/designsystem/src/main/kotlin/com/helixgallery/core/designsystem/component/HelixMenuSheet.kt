@@ -47,7 +47,12 @@ data class HelixMenuAction(
     val enabled: Boolean = true,
     val destructive: Boolean = false,
     val selected: Boolean = false,
-    val onClick: () -> Unit,
+    /**
+     * Página que abre **dentro do mesmo painel** (a altura anima, e o voltar leva ao menu) em vez de fechar o
+     * menu: serve para confirmações e escolhas. Com [page], tocar não fecha o painel e [onClick] não é usado.
+     */
+    val page: HelixPageContent? = null,
+    val onClick: () -> Unit = {},
 )
 
 /**
@@ -72,14 +77,14 @@ fun HelixMoreMenu(
     if (open) HelixMenuSheet(actions = actions, onDismiss = { open = false }, header = header)
 }
 
-/** O painel do menu: sobe de baixo, com as opções (ícone + texto) em lista. Tocar numa opção a faz e fecha descendo. */
+/** O painel do menu: sobe de baixo, com as opções (ícone + texto) em lista. Tocar numa opção a faz e fecha descendo; opção com [HelixMenuAction.page] abre a página no mesmo painel. */
 @Composable
 fun HelixMenuSheet(
     actions: List<HelixMenuAction>,
     onDismiss: () -> Unit,
     header: String? = null,
 ) {
-    HelixModalSheet(onDismiss = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+    HelixSmartSheet(onDismiss = onDismiss) {
         val sheet = this
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
             if (header != null) {
@@ -100,8 +105,13 @@ fun HelixMenuSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = action.enabled) {
-                            action.onClick()
-                            sheet.dismiss()
+                            val page = action.page
+                            if (page != null) {
+                                sheet.open(page)
+                            } else {
+                                action.onClick()
+                                sheet.dismiss()
+                            }
                         }
                         .padding(horizontal = 24.dp, vertical = 14.dp)
                         .alpha(if (action.enabled) 1f else 0.38f),

@@ -13,4 +13,7 @@
     <string name="ds_unmute">Ativar som</string>
     <string name="ds_cancel">Cancelar</string>
     <string name="ds_select_all">Selecionar tudo</string>
+    <string name="ds_today">Hoje</string>
+    <string name="ds_yesterday">Ontem</string>
+    <string name="ds_select_period">Selecionar este período</string>
 </resources>

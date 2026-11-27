@@ -9,12 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,8 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.helixgallery.core.designsystem.R
 
 /**
- * Painel de confirmação do app (no lugar da caixa do sistema), no modelo do Intruphon: voltar redondo no
- * topo, título, texto, o botão principal vermelho e "Cancelar" embaixo. Confirmar faz [onConfirm] e fecha descendo.
+ * Painel de confirmação do app (no lugar da caixa do sistema), no modelo do Intruphon: título, texto, o botão principal vermelho e "Cancelar" embaixo. Confirmar faz [onConfirm] e fecha descendo.
  */
 @Composable
 fun HelixConfirmSheet(
@@ -40,14 +35,9 @@ fun HelixConfirmSheet(
     HelixModalSheet(onDismiss = onDismiss) {
         val sheet = this
         Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 24.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(top = 8.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            HelixFloatingCircle(Modifier.padding(start = 16.dp)) {
-                IconButton(onClick = { sheet.dismiss() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ds_back))
-                }
-            }
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
                 Text(message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -7,6 +7,11 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ## [Unreleased]
 
 ### Changed
+- Selection actions in the gallery (share, favorite, move to vault, trash) now sit in a horizontal list at the bottom of the screen, like Google Photos, instead of behind a ⋮ button.
+- Every date title now has a round button that selects (or unselects) that whole period.
+- Date titles are shorter: today, yesterday and the last week show the day name; older dates look like "Sun., Nov. 15"; dates from another year also show the year.
+- Panels with several steps are now one smart panel: choices and confirmations open inside the same panel with a back button, and the height adapts smoothly. "Add to" and "Empty trash" use it.
+- The delete confirmation panel no longer has a back button, since there is nowhere to go back to.
 - The vault is hidden from the Android recent-apps screen and from screenshots while it is open.
 - Hold and slide to select now also works in the vault, with the same range selection as the gallery.
 - Dragging the fast-scroll handle no longer fights the swipe between tabs: while your finger is on the handle, only vertical movement is accepted.

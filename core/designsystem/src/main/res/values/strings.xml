@@ -13,4 +13,7 @@
     <string name="ds_unmute">Unmute</string>
     <string name="ds_cancel">Cancel</string>
     <string name="ds_select_all">Select all</string>
+    <string name="ds_today">Today</string>
+    <string name="ds_yesterday">Yesterday</string>
+    <string name="ds_select_period">Select this period</string>
 </resources>

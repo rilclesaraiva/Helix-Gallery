@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.component.HelixBottomActionBar
 import com.helixgallery.core.designsystem.component.HelixConfirmSheet
+import com.helixgallery.core.designsystem.component.HelixSmartSheet
 import com.helixgallery.core.model.buildAlbums
 import com.helixgallery.core.model.AlbumSummary
 import android.widget.Toast
@@ -342,7 +343,10 @@ private fun ViewerContent(
 
 private enum class ViewerConfirm { Trash, DeleteForever }
 
-/** Painel "Adicionar a": pequeno, com Álbum, uma linha de separação e Cofre. Álbum abre a lista de pastas. */
+/**
+ * Painel "Adicionar a" (painel inteligente): pequeno, com Álbum, uma linha de separação e Cofre. Álbum abre
+ * a lista de pastas como página do mesmo painel (com botão de voltar).
+ */
 @Composable
 private fun AddToSheet(
     albums: List<AlbumSummary>,
@@ -350,40 +354,40 @@ private fun AddToSheet(
     onAlbum: (AlbumSummary) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    HelixModalSheet(onDismiss = onDismiss) {
+    HelixSmartSheet(onDismiss = onDismiss) {
         val sheet = this
-        var pickingAlbum by remember { mutableStateOf(false) }
-        val fadeSpec = helixEffectsSpec<Float>()
-        AnimatedContent(
-            targetState = pickingAlbum,
-            transitionSpec = { fadeIn(fadeSpec) togetherWith fadeOut(fadeSpec) },
-            label = "addTo",
-        ) { picking ->
-            Column(Modifier.padding(bottom = 24.dp)) {
-                Text(
-                    text = stringResource(R.string.viewer_add_to),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-                if (!picking) {
-                    AddToRow(HelixIcons.Collections, stringResource(R.string.viewer_add_to_album)) { pickingAlbum = true }
-                    if (onVault != null) {
-                        HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
-                        AddToRow(HelixIcons.Lock, stringResource(R.string.viewer_add_to_vault)) {
-                            onVault()
-                            sheet.dismiss()
-                        }
-                    }
-                } else {
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
-                        albums.forEach { album ->
-                            AddToRow(HelixIcons.Collections, album.name) {
-                                onAlbum(album)
-                                sheet.dismiss()
+        Column(Modifier.padding(bottom = 24.dp)) {
+            Text(
+                text = stringResource(R.string.viewer_add_to),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            AddToRow(HelixIcons.Collections, stringResource(R.string.viewer_add_to_album)) {
+                sheet.open {
+                    Column(Modifier.padding(bottom = 24.dp)) {
+                        Text(
+                            text = stringResource(R.string.viewer_add_to_album),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                        )
+                        Column(Modifier.verticalScroll(rememberScrollState())) {
+                            albums.forEach { album ->
+                                AddToRow(HelixIcons.Collections, album.name) {
+                                    onAlbum(album)
+                                    dismiss()
+                                }
                             }
                         }
                     }
+                }
+            }
+            if (onVault != null) {
+                HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
+                AddToRow(HelixIcons.Lock, stringResource(R.string.viewer_add_to_vault)) {
+                    onVault()
+                    sheet.dismiss()
                 }
             }
         }

@@ -45,7 +45,9 @@ import androidx.compose.runtime.mutableStateOf
 import com.helixgallery.core.designsystem.component.recedeWhileSelecting
 import com.helixgallery.core.designsystem.component.HelixSelectionBar
 import com.helixgallery.core.designsystem.component.HelixBottomActionBar
+import com.helixgallery.core.designsystem.component.HelixConfirmPage
 import com.helixgallery.core.designsystem.component.HelixConfirmSheet
+import com.helixgallery.core.designsystem.component.HelixSelectionActionsBar
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
@@ -204,12 +206,20 @@ fun CollectionScreen(
         }
         // Na lixeira, Restaurar e Excluir ficam na barra de baixo (abaixo), não no ⋮.
     }
+    // Esvaziar a lixeira confirma numa página do mesmo painel do menu (com voltar), não em painel por cima.
     val trashMenu = listOf(
         HelixMenuAction(
             stringResource(R.string.photos_empty_trash_action),
             Icons.Filled.Delete,
             destructive = true,
-            onClick = { confirm = Confirm.EmptyTrash },
+            page = {
+                HelixConfirmPage(
+                    title = stringResource(R.string.photos_confirm_empty_title),
+                    message = pluralStringResource(R.plurals.photos_confirm_empty_message, items.size, items.size),
+                    confirmLabel = stringResource(R.string.photos_empty_trash_action),
+                    onConfirm = { launch(viewModel.repository.deleteRequest(items.map { it.uri })) },
+                )
+            },
         ),
     )
 
@@ -286,42 +296,47 @@ fun CollectionScreen(
                 onDestructive = { confirm = Confirm.DeleteForever },
             )
         }
+        // Fora da lixeira, as ações da seleção ficam embaixo (lista horizontal), não num ⋮ lá em cima.
+        AnimatedVisibility(
+            visible = selecting && !inTrash,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(helixSpatialSpec()) { it } + fadeIn(helixEffectsSpec()),
+            exit = slideOutVertically(helixSpatialSpec()) { it } + fadeOut(helixEffectsSpec()),
+        ) {
+            HelixSelectionActionsBar(actions = selectionActions)
+        }
         HelixSelectionBar(
             visible = selecting,
             count = selectedIds.size,
             allSelected = items.isNotEmpty() && selectedIds.containsAll(items.map { it.id }),
             onClose = viewModel::clearSelection,
             onToggleAll = { all -> if (all) viewModel.selectAll(items.map { it.id }) else viewModel.clearSelection() },
-            actions = selectionActions,
+            actions = emptyList(),
             modifier = Modifier.align(Alignment.TopCenter),
         )
     }
 
     confirm?.let { kind ->
-        val count = if (kind == Confirm.EmptyTrash) items.size else selectedItems.size
+        val count = selectedItems.size
         HelixConfirmSheet(
             title = when (kind) {
                 Confirm.Trash -> pluralStringResource(R.plurals.photos_confirm_trash_title, count, count)
                 Confirm.DeleteForever -> pluralStringResource(R.plurals.photos_confirm_delete_title, count, count)
-                Confirm.EmptyTrash -> stringResource(R.string.photos_confirm_empty_title)
             },
             message = when (kind) {
                 Confirm.Trash -> stringResource(R.string.photos_confirm_trash_message)
                 Confirm.DeleteForever -> stringResource(R.string.photos_confirm_delete_message)
-                Confirm.EmptyTrash -> pluralStringResource(R.plurals.photos_confirm_empty_message, count, count)
             },
             confirmLabel = stringResource(
                 when (kind) {
                     Confirm.Trash -> R.string.photos_trash
                     Confirm.DeleteForever -> R.string.photos_delete
-                    Confirm.EmptyTrash -> R.string.photos_empty_trash_action
                 },
             ),
             onConfirm = {
                 when (kind) {
                     Confirm.Trash -> launch(viewModel.repository.trashRequest(selectedItems.map { it.uri }, true))
                     Confirm.DeleteForever -> launch(viewModel.repository.deleteRequest(selectedItems.map { it.uri }))
-                    Confirm.EmptyTrash -> launch(viewModel.repository.deleteRequest(items.map { it.uri }))
                 }
             },
             onDismiss = { confirm = null },
@@ -329,7 +344,7 @@ fun CollectionScreen(
     }
 }
 
-private enum class Confirm { Trash, DeleteForever, EmptyTrash }
+private enum class Confirm { Trash, DeleteForever }
 
 @Composable
 private fun EmptyState(inTrash: Boolean) {

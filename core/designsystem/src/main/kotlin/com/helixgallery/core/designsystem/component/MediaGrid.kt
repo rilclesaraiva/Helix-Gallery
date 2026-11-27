@@ -6,6 +6,9 @@ package com.helixgallery.core.designsystem.component
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,11 +71,17 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-/** Título de uma seção da grade ("Seg, 3 de nov." ou "novembro de 2026"), no idioma do aparelho. */
+/**
+ * Título de uma seção da grade, no idioma do aparelho. No modo Mês: "novembro de 2026". Nos outros, pela
+ * distância até hoje: hoje, ontem e até seis dias atrás pelo nome do dia ("Segunda-feira"); mais antigo,
+ * curto ("Dom., 15 de nov."); de outro ano, curto com o ano ("Dom., 15 de nov. de 2025").
+ */
 @Composable
 fun rememberHeaderText(header: GridEntry.Header): String {
     val locale = currentLocale()
-    return remember(header, locale) { formatHeader(header, locale) }
+    val today = stringResource(R.string.ds_today)
+    val yesterday = stringResource(R.string.ds_yesterday)
+    return remember(header, locale, today, yesterday) { formatHeader(header, locale, LocalDate.now(), today, yesterday) }
 }
 
 @Composable
@@ -81,11 +90,29 @@ internal fun currentLocale(): Locale {
     return remember(config) { config.locales[0] ?: Locale.getDefault() }
 }
 
-internal fun formatHeader(header: GridEntry.Header, locale: Locale): String {
+internal fun formatHeader(
+    header: GridEntry.Header,
+    locale: Locale,
+    today: LocalDate,
+    todayLabel: String,
+    yesterdayLabel: String,
+): String {
     val date = LocalDate.ofEpochDay(header.epochDay)
     val text = when (header.layout) {
         GridLayout.Month -> date.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
-        else -> date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale))
+        else -> {
+            val daysAgo = java.time.temporal.ChronoUnit.DAYS.between(date, today)
+            when {
+                daysAgo == 0L -> todayLabel
+                daysAgo == 1L -> yesterdayLabel
+                daysAgo in 2..6 -> date.format(DateTimeFormatter.ofPattern("EEEE", locale))
+                else -> {
+                    // O padrão certo de cada idioma ("EEE, d 'de' MMM" no português; "EEE, MMM d" no inglês).
+                    val skeleton = if (date.year == today.year) "EEEdMMM" else "yMMMEd"
+                    date.format(DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton), locale))
+                }
+            }
+        }
     }
     return text.replaceFirstChar { it.titlecase(locale) }
 }
@@ -121,6 +148,18 @@ fun MediaGrid(
     val placementSpec = helixSpatialSpec<IntOffset>()
     val fadeSpec = helixEffectsSpec<Float>()
     val suppressClick = remember { mutableStateOf(false) }
+    // As fotos de cada título (dia ou mês), para o botão de marcar o período inteiro.
+    val groups = remember(entries) {
+        val map = LinkedHashMap<Long, MutableList<MediaItem>>()
+        var current: MutableList<MediaItem>? = null
+        entries.forEach { entry ->
+            when (entry) {
+                is GridEntry.Header -> current = mutableListOf<MediaItem>().also { map[entry.epochDay] = it }
+                is GridEntry.Media -> current?.add(entry.item)
+            }
+        }
+        map
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = state,
@@ -217,15 +256,31 @@ fun MediaGrid(
             },
         ) { entry ->
             when (entry) {
-                is GridEntry.Header -> Text(
-                    text = rememberHeaderText(entry),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec)
-                        .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
-                )
+                is GridEntry.Header -> {
+                    val group = groups[entry.epochDay].orEmpty()
+                    val allSelected = group.isNotEmpty() && group.all { it.id in selectedIds }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec)
+                            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 0.dp),
+                    ) {
+                        Text(
+                            text = rememberHeaderText(entry),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        PeriodCheck(
+                            checked = allSelected,
+                            onClick = {
+                                // Tudo marcado: desmarca o período; senão marca o que falta.
+                                group.filter { (it.id in selectedIds) == allSelected }.forEach(onToggleSelect)
+                            },
+                        )
+                    }
+                }
                 is GridEntry.Media -> MediaTile(
                     modifier = Modifier.animateItem(placementSpec = placementSpec, fadeInSpec = fadeSpec, fadeOutSpec = fadeSpec),
                     item = entry.item,
@@ -244,6 +299,39 @@ fun MediaGrid(
 }
 
 private const val EDGE_SCROLL_PX = 28f
+
+/** Bolinha no canto de cada título: marca ou desmarca todas as fotos daquele período. */
+@Composable
+private fun PeriodCheck(checked: Boolean, onClick: () -> Unit) {
+    val fill by animateColorAsState(
+        if (checked) MaterialTheme.colorScheme.primary else Color.Transparent,
+        helixEffectsSpec(),
+        label = "periodFill",
+    )
+    val line by animateColorAsState(
+        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        helixEffectsSpec(),
+        label = "periodLine",
+    )
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(24.dp).clip(CircleShape).background(fill).border(2.dp, line, CircleShape),
+        ) {
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = stringResource(R.string.ds_select_period),
+                tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (checked) 1f else 0f),
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
 
 /** Uma foto ou vídeo na grade, com marcas de vídeo, favorito e seleção. */
 @OptIn(ExperimentalFoundationApi::class)
