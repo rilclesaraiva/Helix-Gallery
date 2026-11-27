@@ -20,6 +20,21 @@ class TextReaderTest {
     }
 
     @Test
+    fun unePorBlocoELinhasEmUmParagrafo() {
+        val blocks = listOf(
+            listOf("Claude, simule 10 mil", "versões da minha vida"),
+            listOf("Unir-se"),
+        )
+        assertEquals("Claude, simule 10 mil versões da minha vida\nUnir-se", flowText(blocks))
+    }
+
+    @Test
+    fun ignoraLinhasEBlocosVazios() {
+        assertEquals("a b", flowText(listOf(listOf(" a ", "", "b"), listOf(" "), emptyList())))
+        assertEquals("", flowText(emptyList()))
+    }
+
+    @Test
     fun usaOLadoMaior() {
         assertEquals(sampleSizeFor(6000, 1000), sampleSizeFor(1000, 6000))
     }

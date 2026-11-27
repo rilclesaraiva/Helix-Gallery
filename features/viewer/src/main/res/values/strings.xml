@@ -41,4 +41,5 @@
     <string name="viewer_text_failed">Couldn\'t read this image.</string>
     <string name="viewer_text_copy_all">Copy all</string>
     <string name="viewer_text_copied">Text copied</string>
+    <string name="viewer_text_copy_original">Copy with original line breaks</string>
 </resources>

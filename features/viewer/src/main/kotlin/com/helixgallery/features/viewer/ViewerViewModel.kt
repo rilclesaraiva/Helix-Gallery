@@ -42,7 +42,7 @@ data class ExifInfo(
 /** O "Copiar texto": o que o painel mostra. */
 sealed interface TextState {
     data object Reading : TextState
-    data class Done(val text: String) : TextState
+    data class Done(val flowed: String, val original: String) : TextState
     data class Failed(val detail: String) : TextState
 }
 
@@ -100,7 +100,7 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
         textJob = viewModelScope.launch {
             val result = textReader.read(uri)
             _text.value = when (result) {
-                is TextReadResult.Text -> TextState.Done(result.text.trim())
+                is TextReadResult.Text -> TextState.Done(result.flowed.trim(), result.original.trim())
                 is TextReadResult.Failure -> TextState.Failed(result.detail)
             }
         }

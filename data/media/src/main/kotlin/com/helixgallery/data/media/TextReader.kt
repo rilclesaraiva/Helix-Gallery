@@ -22,11 +22,18 @@ interface TextReader {
 }
 
 sealed interface TextReadResult {
-    data class Text(val text: String) : TextReadResult
+    /** [flowed]: um parágrafo por bloco, com as linhas do bloco unidas; [original]: uma linha por linha da imagem. */
+    data class Text(val flowed: String, val original: String) : TextReadResult
 
     /** [detail] é o tipo e a mensagem do erro, para diagnóstico. */
     data class Failure(val detail: String) : TextReadResult
 }
+
+/** Une as linhas de cada bloco (parágrafo) numa só, separadas por espaço, e separa os blocos por quebra de linha. */
+internal fun flowText(blocks: List<List<String>>): String =
+    blocks.map { lines -> lines.map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ") }
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
 
 private fun Throwable.detail(): String = "${this::class.java.simpleName}: ${message.orEmpty()}".take(300)
 
@@ -59,7 +66,7 @@ private class MlKitTextReader(private val context: Context) : TextReader {
             try {
                 suspendCancellableCoroutine<TextReadResult> { cont ->
                     recognizer.process(InputImage.fromBitmap(bitmap, 0))
-                        .addOnSuccessListener { result -> cont.resume(TextReadResult.Text(result.text)) }
+                        .addOnSuccessListener { result -> cont.resume(TextReadResult.Text(flowText(result.textBlocks.map { block -> block.lines.map { it.text } }), result.text)) }
                         .addOnFailureListener { error -> cont.resume(TextReadResult.Failure(error.detail())) }
                 }
             } finally {

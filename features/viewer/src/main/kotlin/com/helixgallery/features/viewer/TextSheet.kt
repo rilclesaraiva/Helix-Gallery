@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,12 +66,12 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
                         }
                     }
                 }
-                is TextState.Done -> if (state.text.isBlank()) {
+                is TextState.Done -> if (state.flowed.isBlank()) {
                     Text(stringResource(R.string.viewer_text_none), style = MaterialTheme.typography.bodyLarge)
                 } else {
                     SelectionContainer {
                         Text(
-                            state.text,
+                            state.flowed,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
@@ -78,11 +79,21 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
                     }
                     Button(
                         onClick = {
-                            copyToClipboard(context, state.text)
+                            copyToClipboard(context, state.flowed)
                             sheet.dismiss()
                         },
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     ) { Text(stringResource(R.string.viewer_text_copy_all)) }
+                    // Com as quebras de linha como estão na imagem (útil para listas e tabelas).
+                    if (state.original != state.flowed) {
+                        TextButton(
+                            onClick = {
+                                copyToClipboard(context, state.original)
+                                sheet.dismiss()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(R.string.viewer_text_copy_original)) }
+                    }
                 }
             }
         }
