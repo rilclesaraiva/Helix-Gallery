@@ -97,5 +97,6 @@ Módulos com dependências em uma direção só: `app → features → data → 
 
 ## Contexto atual
 - Etapas 4 (cofre), 5 (editor: `features/editor`, salva cópia JPEG via `data/media/MediaWriter`, aberto pelo ⋮ do visualizador), 6 (limpeza: capturas, vídeos grandes, duplicadas exatas por SHA-256; falta compressão e "parecidas") e 8 (backup ZIP via SAF) escritas e com CI verde. Falta: etapa 7 (Lugares/Documentos), vistoria no aparelho.
+- **Planejado (pedido do mantenedor, 28/11/2026):** "riscar áreas" no Copiar texto, isto é, riscar com o dedo as partes da imagem a **ignorar** no OCR (o recorte retangular, `TextAreaPicker`, já existe; riscar é a interação que falta). Entra depois do seletor de cor.
 - Já feito após a primeira vistoria: abas com posição salva, animações do Boom, rolagem rápida por pixels, Abrir com, Ajustes por categorias. Aguardando nova vistoria e a escolha do ícone (modelos A–F).
 - Etapas 1 a 3 do roteiro escritas de uma vez (v0.1.0 ainda sem Release). Falta vistoria no aparelho: o primeiro CI decide se compila. Itens conhecidos da primeira entrega: sem "fotos destacadas" nem "agrupar parecidas" ainda; local do EXIF (GPS) não é lido (exigiria `ACCESS_MEDIA_LOCATION`, decisão do mantenedor).
