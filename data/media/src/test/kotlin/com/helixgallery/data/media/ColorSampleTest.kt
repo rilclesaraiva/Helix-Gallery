@@ -42,4 +42,14 @@ class ColorSampleTest {
         val pixels = IntArray(100_000) { 0xFFFFFFFF.toInt() }
         assertEquals(0xFFFFFF, averageRgb(pixels))
     }
+
+    @Test
+    fun sensibilidadeCaiComOZoomEFicaNosLimites() {
+        assertEquals(0.6f, panSensitivity(1f), 0.0001f)
+        assertEquals(0.6f, panSensitivity(0.5f), 0.0001f)
+        assertEquals(0.3f, panSensitivity(4f), 0.0001f)
+        assertEquals(0.15f, panSensitivity(16f), 0.0001f)
+        assertEquals(0.1f, panSensitivity(40f), 0.0001f)
+        assertEquals(true, panSensitivity(8f) < panSensitivity(2f))
+    }
 }

@@ -55,7 +55,7 @@
     <string name="viewer_area_down">Move area down</string>
     <string name="viewer_area_left">Move area left</string>
     <string name="viewer_area_right">Move area right</string>
-    <string name="viewer_pick_color">Pick a color</string>
+    <string name="viewer_pick_color">Color picker</string>
     <string name="viewer_color_copied">Color copied</string>
     <string name="viewer_color_description">Color picker: the color under the center circle</string>
     <string name="viewer_color_zoom_in">Zoom in</string>

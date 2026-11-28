@@ -5,10 +5,12 @@ package com.helixgallery.features.viewer
 
 import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,14 +58,21 @@ import androidx.compose.ui.window.DialogProperties
 import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
 import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
+import com.helixgallery.core.designsystem.theme.helixSpatialSpec
 import com.helixgallery.core.designsystem.theme.readableOn
 import com.helixgallery.data.media.hexOf
 import com.helixgallery.data.media.loadPickerBitmap
+import com.helixgallery.data.media.panSensitivity
 import com.helixgallery.data.media.sampleColor
 import kotlin.math.min
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 private const val MIN_ZOOM = 0.5f
 private const val MAX_ZOOM = 40f
+
+/** Ampliação do toque duplo: a mesma do visualizador de fotos. */
+private const val DOUBLE_TAP_ZOOM = 2.5f
 
 /**
  * Seletor de cor em tela cheia: a imagem se move e se amplia por baixo de uma bolinha fixa no centro, e a barra
@@ -131,6 +141,39 @@ private fun PickerContent(bitmap: Bitmap) {
         cy = (cy - dyPx / scale).coerceIn(0f, bitmap.height - 1f)
     }
 
+    // Toque duplo como no visualizador de fotos: alterna entre caber na tela e 2,5×, animado, em volta do ponto tocado.
+    val scope = rememberCoroutineScope()
+    var zoomJob by remember { mutableStateOf<Job?>(null) }
+    val zoomSpec = helixSpatialSpec<Float>()
+    fun doubleTapZoom(tap: Offset) {
+        val fromZoom = zoom
+        val fromX = cx
+        val fromY = cy
+        val zoomIn = fromZoom <= 1.01f
+        val toZoom = if (zoomIn) DOUBLE_TAP_ZOOM else 1f
+        // Ao ampliar, o ponto tocado fica onde está na tela; ao reduzir, a imagem volta inteira e centrada.
+        val toX: Float
+        val toY: Float
+        if (zoomIn) {
+            val toScale = fitScale * toZoom
+            val pointX = fromX + (tap.x - box.width / 2f) / scale
+            val pointY = fromY + (tap.y - box.height / 2f) / scale
+            toX = (pointX - (tap.x - box.width / 2f) / toScale).coerceIn(0f, bitmap.width - 1f)
+            toY = (pointY - (tap.y - box.height / 2f) / toScale).coerceIn(0f, bitmap.height - 1f)
+        } else {
+            toX = bitmap.width / 2f
+            toY = bitmap.height / 2f
+        }
+        zoomJob?.cancel()
+        zoomJob = scope.launch {
+            animate(0f, 1f, animationSpec = zoomSpec) { t, _ ->
+                zoom = (fromZoom + (toZoom - fromZoom) * t).coerceIn(MIN_ZOOM, MAX_ZOOM)
+                cx = (fromX + (toX - fromX) * t).coerceIn(0f, bitmap.width - 1f)
+                cy = (fromY + (toY - fromY) * t).coerceIn(0f, bitmap.height - 1f)
+            }
+        }
+    }
+
     val description = stringResource(R.string.viewer_color_description)
     val zoomIn = stringResource(R.string.viewer_color_zoom_in)
     val zoomOut = stringResource(R.string.viewer_color_zoom_out)
@@ -160,9 +203,15 @@ private fun PickerContent(bitmap: Bitmap) {
                     )
                 }
                 .pointerInput(bitmap) {
+                    detectTapGestures(onDoubleTap = { tap -> doubleTapZoom(tap) })
+                }
+                .pointerInput(bitmap) {
                     detectTransformGestures { _, pan, zoomChange, _ ->
+                        zoomJob?.cancel()
                         zoom = (zoom * zoomChange).coerceIn(MIN_ZOOM, MAX_ZOOM)
-                        moveBy(pan.x, pan.y)
+                        // O ponto anda menos que o dedo (e menos ainda com mais zoom): ajuste fino da cor.
+                        val k = panSensitivity(zoom)
+                        moveBy(pan.x * k, pan.y * k)
                     }
                 },
         ) {

@@ -59,5 +59,11 @@ fun averageRgb(pixels: IntArray): Int {
     return ((r / n).toInt() shl 16) or ((g / n).toInt() shl 8) or (b / n).toInt()
 }
 
+/**
+ * Quanto do arrasto do dedo vira movimento do ponto no seletor de cor. Menor que 1 para dar precisão, e cada vez
+ * menor com o zoom (quanto mais ampliado, mais fino o ajuste): 0,6 sem zoom, ~0,3 em 4×, ~0,15 em 16×, mínimo 0,1.
+ */
+fun panSensitivity(zoom: Float): Float = (0.6f / kotlin.math.sqrt(zoom.coerceAtLeast(1f))).coerceIn(0.1f, 0.6f)
+
 /** O RGB 0xRRGGBB como texto, em maiúsculas: `#716E6F`. */
 fun hexOf(rgb: Int): String = "#%06X".format(rgb and 0xFFFFFF)
