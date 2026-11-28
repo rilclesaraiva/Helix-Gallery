@@ -8,6 +8,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -109,11 +110,11 @@ internal fun TextSheet(state: TextState, onDismiss: () -> Unit) {
     }
 }
 
-private fun copyToClipboard(context: Context, text: String) {
+internal fun copyToClipboard(context: Context, text: String, @StringRes toast: Int = R.string.viewer_text_copied) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText(null, text))
     // A partir do Android 13 o próprio sistema avisa que copiou.
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        Toast.makeText(context, R.string.viewer_text_copied, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
     }
 }

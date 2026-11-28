@@ -55,4 +55,14 @@
     <string name="viewer_area_down">Mover área para baixo</string>
     <string name="viewer_area_left">Mover área para a esquerda</string>
     <string name="viewer_area_right">Mover área para a direita</string>
+    <string name="viewer_pick_color">Escolher cor</string>
+    <string name="viewer_color_hint">Toque para copiar</string>
+    <string name="viewer_color_copied">Cor copiada</string>
+    <string name="viewer_color_description">Seletor de cor: a cor sob a bolinha do centro</string>
+    <string name="viewer_color_zoom_in">Ampliar</string>
+    <string name="viewer_color_zoom_out">Reduzir</string>
+    <string name="viewer_color_up">Mover imagem para cima</string>
+    <string name="viewer_color_down">Mover imagem para baixo</string>
+    <string name="viewer_color_left">Mover imagem para a esquerda</string>
+    <string name="viewer_color_right">Mover imagem para a direita</string>
 </resources>
