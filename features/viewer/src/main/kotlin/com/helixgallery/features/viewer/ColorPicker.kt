@@ -7,15 +7,18 @@ import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,13 +47,13 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.helixgallery.core.designsystem.component.HelixFloatingBackButton
+import com.helixgallery.core.designsystem.component.HelixIcons
 import com.helixgallery.core.designsystem.theme.helixEffectsSpec
 import com.helixgallery.core.designsystem.theme.readableOn
 import com.helixgallery.data.media.hexOf
@@ -86,14 +89,17 @@ internal fun ColorPicker(uri: String, onClose: () -> Unit) {
             contentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             val result = loaded
-            when {
-                result == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                result.isFailure -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.viewer_text_failed), style = MaterialTheme.typography.bodyLarge)
+            // O Surface manda o filho ocupar tudo; o botão de voltar precisa de um Box próprio para ficar do tamanho dele.
+            Box(Modifier.fillMaxSize()) {
+                when {
+                    result == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    result.isFailure -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.viewer_text_failed), style = MaterialTheme.typography.bodyLarge)
+                    }
+                    else -> PickerContent(result.getOrThrow())
                 }
-                else -> PickerContent(result.getOrThrow())
+                HelixFloatingBackButton(onClick = onClose, modifier = Modifier.align(Alignment.TopStart))
             }
-            HelixFloatingBackButton(onClick = onClose)
         }
     }
 }
@@ -134,12 +140,12 @@ private fun PickerContent(bitmap: Bitmap) {
     val toRight = stringResource(R.string.viewer_color_right)
     val step = with(density) { 48.dp.toPx() }
     val copiedToast = R.string.viewer_color_copied
+    val hexDescription = stringResource(R.string.viewer_color_pill_description, hex)
 
-    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
                 .onSizeChanged { box = it }
                 // Todo gesto de arrastar tem alternativa para quem usa leitor de tela.
                 .semantics {
@@ -173,23 +179,28 @@ private fun PickerContent(bitmap: Bitmap) {
                 drawCircle(ringInner, ringRadius, center, style = Stroke(ringStroke))
             }
         }
+        // O código numa pílula pequena que flutua embaixo, com a cor do ponto e um contorno para aparecer sobre qualquer foto.
         val onPicked = readableOn(picked)
         Surface(
             color = picked,
             contentColor = onPicked,
-            modifier = Modifier.fillMaxWidth().clickable { copyToClipboard(context, hex, copiedToast) },
+            shape = MaterialTheme.shapes.extraLarge,
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
+            shadowElevation = 6.dp,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 24.dp)
+                .semantics { contentDescription = hexDescription }
+                .clickable { copyToClipboard(context, hex, copiedToast) },
         ) {
-            Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                Modifier.padding(start = 20.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(hex, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                Text(
-                    stringResource(R.string.viewer_color_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = onPicked.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+                Text(hex, style = MaterialTheme.typography.titleLarge)
+                Icon(HelixIcons.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
             }
         }
     }

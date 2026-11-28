@@ -56,7 +56,6 @@
     <string name="viewer_area_left">Move area left</string>
     <string name="viewer_area_right">Move area right</string>
     <string name="viewer_pick_color">Pick a color</string>
-    <string name="viewer_color_hint">Tap to copy</string>
     <string name="viewer_color_copied">Color copied</string>
     <string name="viewer_color_description">Color picker: the color under the center circle</string>
     <string name="viewer_color_zoom_in">Zoom in</string>
@@ -65,4 +64,5 @@
     <string name="viewer_color_down">Move image down</string>
     <string name="viewer_color_left">Move image left</string>
     <string name="viewer_color_right">Move image right</string>
+    <string name="viewer_color_pill_description">Color %1$s, tap to copy</string>
 </resources>
